@@ -39,7 +39,7 @@ def build_graph(seqence):
 	return root
 
 def subst_cost(a, b):
-	return 0 if a == b else 1
+	return 2 if a == b else -1
 
 def dfs(visited, path, node):
 	visited.add(node)
@@ -55,38 +55,73 @@ def top_sort(root):
 	return path[::-1]
 					
 def compute_dist(seqence, root):
+	INS_PENALITY = -1
+	DEL_PENALITY = -1
+
 	graph = top_sort(root)
-	D = {graph[0] : [i for i in xrange(len(seqence) + 1)]}
+	maxScore = -sys.maxint
+	maxPos = None
+
+	D = {node : [0] * (len(seqence) + 1) for node in graph}
+	prev = {node : [(None, 0)] * (len(seqence) + 1) for node in graph}
 
 	for node in graph[1:]:
-		if node not in D:
-			D[node] = [0] * (len(seqence) + 1)
-			
-		maxInit = sys.maxint
-		for _, prevNode in node.in_edges:
-			maxInit = min(D[prevNode][0] + 1, maxInit)
-		D[node][0] = maxInit
-
 		for n in xrange(1, len(seqence) + 1):
-			matchScore = sys.maxint
+			matchScore = -sys.maxint
+			matchNode = None
 			for sym, prevNode in node.in_edges:
 				score = D[prevNode][n - 1] + subst_cost(seqence[n - 1], sym)
-				matchScore = min(score, matchScore)
+				if score > matchScore:
+					matchScore = score
+					matchNode = prevNode
 
-			delScore = sys.maxint
+			delScore = -sys.maxint
+			delNode = None
 			for _, prevNode in node.in_edges:
-				score = D[prevNode][n] + 1
-				delScore = min(score, delScore)
+				score = D[prevNode][n] + DEL_PENALITY
+				if score > delScore:
+					delScore = score
+					delNode = prevNode
 
-			insScore = D[node][n - 1] + 1
-			D[node][n] = min(matchScore, delScore, insScore)
+			insScore = D[node][n - 1] + INS_PENALITY
 
-	print [(i,x.edges.keys()) for i, x in enumerate(graph)]
-	for node in graph:
-		for n in xrange(0, len(seqence) + 1):
-			print D[node][n],
-		print ""
-	return D[graph[-1]][len(seqence)]
+			score = max(0, matchScore, delScore, insScore)
+
+			if score == matchScore:
+				prev[node][n] = (matchNode, n - 1)
+			elif score == delScore:
+				prev[node][n] = (delNode, n)
+			elif score == insScore:
+				prev[node][n] = (node, n - 1)
+
+			D[node][n] = score
+			if score > maxScore:
+				maxScore = score
+				maxPos = node, n
+
+	#restore alignment
+	path = []
+	n = maxPos
+	while True:
+		if n[0] == None or D[n[0]][n[1]] <= 0:
+			break
+		path.append(n[1] - 1)
+		n = prev[n[0]][n[1]]
+
+	########
+	#print [(i,x.edges.keys()) for i, x in enumerate(graph)]
+	#for node in graph:
+	#	for n in xrange(0, len(seqence) + 1):
+	#		print "%2d" % D[node][n],
+	#	print ""
+	#######
+	return path[-1], path[0], D[graph[-1]][len(seqence)]
 	
-graph = build_graph("VL")
-print compute_dist("TATTAC", graph)
+graph = build_graph("YYC")
+print compute_dist( "ATAGATAGACGCCTACGGCAGCCGCTGGATTGTTATTACTCGCGGCCCAGCCGGCCATGGCCGAAGTGCAGC" + 
+					"TGGTGCAGTCTGGGGGAACCTTGGTGCAGGTTGGGGGTTCTCTGACACTCTCCTGTGCAGCCTCTGGATTCA" +
+					"CCTTCGGAGGTTATGACATGAGCTGGGTCCGCCAGGCTCCAGGAAAGGGGCCCGAGTGGGTCTCACGTATTA" +
+					"ATATGCGTGGTGTTACCACATACTATGCAGACTCCGTGAAGGGCCGATTCACCATCTCCAGAGACAACGCCA" +
+					"AGGACACGGTGTTTCTGCAAATGAACAGCCTGAAATTCGAGGACTCGGCCGTGTATACTGTACAGGTGGGGT" +
+					"CTTCGTTAGTAGCTGGTCGGGGAGCGCCTTGGATTACTGGGGCAAAGGGACAATGGTCACCGTCTCTTCAGG" +
+					"CTCGAGTGCGTCTACAAAAGGCCCGTCTGTGGCGACTATAT", graph)
