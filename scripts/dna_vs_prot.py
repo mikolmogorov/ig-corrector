@@ -54,13 +54,12 @@ def top_sort(root):
 	dfs(visited, path, root)
 	return path[::-1]
 					
-def compute_dist(seqence, root):
+def compute_dist(seqence, root, threshold):
 	INS_PENALITY = -1
 	DEL_PENALITY = -1
 
 	graph = top_sort(root)
-	maxScore = -sys.maxint
-	maxPos = None
+	candidates = []
 
 	D = {node : [0] * (len(seqence) + 1) for node in graph}
 	prev = {node : [(None, 0)] * (len(seqence) + 1) for node in graph}
@@ -95,18 +94,23 @@ def compute_dist(seqence, root):
 				prev[node][n] = (node, n - 1)
 
 			D[node][n] = score
-			if score > maxScore:
-				maxScore = score
-				maxPos = node, n
+			if score >= threshold:
+				try:
+					candidates.remove(prev[node][n])
+				except:
+					pass
+				candidates.append((node, n))
 
-	#restore alignment
-	path = []
-	n = maxPos
-	while True:
-		if n[0] == None or D[n[0]][n[1]] <= 0:
-			break
-		path.append(n[1] - 1)
-		n = prev[n[0]][n[1]]
+	alignments = []
+	for c in candidates:
+		path = []
+		n = c
+		while True:
+			if n[0] == None or D[n[0]][n[1]] <= 0:
+				break
+			path.append(n[1] - 1)
+			n = prev[n[0]][n[1]]
+		alignments.append((path[-1], path[0]))
 
 	########
 	#print [(i,x.edges.keys()) for i, x in enumerate(graph)]
@@ -115,7 +119,7 @@ def compute_dist(seqence, root):
 	#		print "%2d" % D[node][n],
 	#	print ""
 	#######
-	return path[-1], path[0], D[graph[-1]][len(seqence)]
+	return alignments
 	
 graph = build_graph("YYC")
 print compute_dist( "ATAGATAGACGCCTACGGCAGCCGCTGGATTGTTATTACTCGCGGCCCAGCCGGCCATGGCCGAAGTGCAGC" + 
@@ -124,4 +128,4 @@ print compute_dist( "ATAGATAGACGCCTACGGCAGCCGCTGGATTGTTATTACTCGCGGCCCAGCCGGCCATG
 					"ATATGCGTGGTGTTACCACATACTATGCAGACTCCGTGAAGGGCCGATTCACCATCTCCAGAGACAACGCCA" +
 					"AGGACACGGTGTTTCTGCAAATGAACAGCCTGAAATTCGAGGACTCGGCCGTGTATACTGTACAGGTGGGGT" +
 					"CTTCGTTAGTAGCTGGTCGGGGAGCGCCTTGGATTACTGGGGCAAAGGGACAATGGTCACCGTCTCTTCAGG" +
-					"CTCGAGTGCGTCTACAAAAGGCCCGTCTGTGGCGACTATAT", graph)
+					"CTCGAGTGCGTCTACAAAAGGCCCGTCTGTGGCGACTATAT", graph, 16)
