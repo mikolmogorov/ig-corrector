@@ -14,17 +14,33 @@ def back_trans_table():
 	return back_table
 
 class Node:
+	counter = 0
 	def __init__(self):
 		self.edges = {}
 		self.in_edges = []
+		self.nid = Node.counter
+		Node.counter += 1
 
 def build_graph(seqence):
 	table = back_trans_table()
 	root = Node()
 	curRoot = root
+	variant = None
 	for acid in seqence:
 		newRoot = Node()
-		for codon in table[acid]:
+		if acid == "[":
+			variant = ""
+			continue
+		elif acid == "]":
+			codons = sum([table[n] for n in variant], [])
+			variant = None
+		elif variant is not None:
+			variant += acid
+			continue
+		else:
+			codons = table[acid]
+
+		for codon in codons:
 			node = curRoot
 			for i, sym in enumerate(codon):
 				if i < 2:
@@ -39,7 +55,7 @@ def build_graph(seqence):
 	return root
 
 def subst_cost(a, b):
-	return 2 if a == b else -1
+	return 2 if a == b else -2
 
 def dfs(visited, path, node):
 	visited.add(node)
@@ -54,12 +70,13 @@ def top_sort(root):
 	dfs(visited, path, root)
 	return path[::-1]
 					
-def compute_dist(seqence, root, threshold):
+def loc_align(seqence, root, threshold):
 	INS_PENALITY = -1
 	DEL_PENALITY = -1
 
 	graph = top_sort(root)
 	candidates = []
+	maxScore = 0
 
 	D = {node : [0] * (len(seqence) + 1) for node in graph}
 	prev = {node : [(None, 0)] * (len(seqence) + 1) for node in graph}
@@ -94,38 +111,55 @@ def compute_dist(seqence, root, threshold):
 				prev[node][n] = (node, n - 1)
 
 			D[node][n] = score
+			maxScore = max(maxScore, score)
 			if score >= threshold:
 				try:
-					candidates.remove(prev[node][n])
+					p = prev[node][n]
+					if D[p[0]][p[1]] <= score:
+						candidates.remove(p)
 				except:
 					pass
 				candidates.append((node, n))
 
 	alignments = []
 	for c in candidates:
+		aln_score = D[c[0]][c[1]]
 		path = []
 		n = c
 		while True:
 			if n[0] == None or D[n[0]][n[1]] <= 0:
 				break
 			path.append(n[1] - 1)
+			#print ((n[1] - 1, n[0].nid)),
 			n = prev[n[0]][n[1]]
-		alignments.append((path[-1], path[0]))
-
-	########
-	#print [(i,x.edges.keys()) for i, x in enumerate(graph)]
-	#for node in graph:
-	#	for n in xrange(0, len(seqence) + 1):
-	#		print "%2d" % D[node][n],
-	#	print ""
-	#######
-	return alignments
+		alignments.append((path[-1], path[0], aln_score))
 	
-graph = build_graph("YYC")
-print compute_dist( "ATAGATAGACGCCTACGGCAGCCGCTGGATTGTTATTACTCGCGGCCCAGCCGGCCATGGCCGAAGTGCAGC" + 
+	if len(alignments) == 0:
+		return []
+	
+	result = []
+	maxPrev = 0
+	for i in xrange(1, len(alignments)):
+		if alignments[i][0] == alignments[maxPrev][0]:
+			if alignments[i][2] > alignments[maxPrev][2]:
+				maxPrev = i
+		else:
+			result.append(alignments[maxPrev])
+			maxPrev = i
+	result.append(alignments[maxPrev])
+	
+	return result
+
+def main():
+	graph = build_graph("YYC")
+	#print loc_align("TATTATTGC ", graph, 15)
+	print loc_align( "ATAGATAGACGCCTACGGCAGCCGCTGGATTGTTATTACTCGCGGCCCAGCCGGCCATGGCCGAAGTGCAGC" + 
 					"TGGTGCAGTCTGGGGGAACCTTGGTGCAGGTTGGGGGTTCTCTGACACTCTCCTGTGCAGCCTCTGGATTCA" +
 					"CCTTCGGAGGTTATGACATGAGCTGGGTCCGCCAGGCTCCAGGAAAGGGGCCCGAGTGGGTCTCACGTATTA" +
 					"ATATGCGTGGTGTTACCACATACTATGCAGACTCCGTGAAGGGCCGATTCACCATCTCCAGAGACAACGCCA" +
-					"AGGACACGGTGTTTCTGCAAATGAACAGCCTGAAATTCGAGGACTCGGCCGTGTATACTGTACAGGTGGGGT" +
+					"AGGACACGGTGTTTCTGCAAATGAACAGCCTGAAATTCGAGGACTCGGCCGTG TATTATTGC ACAGGTGGGGT" +
 					"CTTCGTTAGTAGCTGGTCGGGGAGCGCCTTGGATTACTGGGGCAAAGGGACAATGGTCACCGTCTCTTCAGG" +
-					"CTCGAGTGCGTCTACAAAAGGCCCGTCTGTGGCGACTATAT", graph, 16)
+					"CTCGAGTGCGTCTACAAAAGGCCCGTCTGTGGCGACTATAT", graph, 15)
+
+if __name__ == "__main__":
+	main()
