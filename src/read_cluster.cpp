@@ -25,24 +25,25 @@ void outputClusters(FastaHash& fastaHash, ClusterHash& clusterHash);
 
 int main(int argc, char** argv)
 {
-	const int KMER = 20;
-	const int THRESHOLD = 4;
 
-	if (argc < 2)
+	if (argc < 4)
 	{
-		std::cout << "USAGE: anchors filename\n";
+		std::cout << "USAGE: anchors kmer nmissmatch filename\n";
 		return 0;
 	}
+
+	const int KMER = atoi(argv[1]);
+	const int THRESHOLD = atoi(argv[2]);
 
 	FastaSequences seqs;
 	FastaHash seqHash;
 	KmerHash kmerHash;
 	ClusterHash clusterHash;
 
-	FastaReader reader(argv[1]);
+	FastaReader reader(argv[3]);
 	if (!reader.IsOk())
 	{
-		std::cout << "error opening " << argv[1] << std::endl;
+		std::cout << "error opening " << argv[3] << std::endl;
 		return 1;
 	}
 	try

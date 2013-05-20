@@ -6,12 +6,15 @@ import sys
 from Bio.Seq import Seq
 
 CDR3_START = "YYC"
-CDR3_END = "W[GS][QKRS]"
+CDR3_END = "WG[QKRS]"
 
 graph_start = aln.build_graph(CDR3_START)
 graph_end = aln.build_graph(CDR3_END)
 
+counter = 0
+
 for h, seq in fr.fasta_source(sys.argv[1]):
+	counter += 1
 	cdr_start = aln.loc_align(seq, graph_start, 16)
 	cdr_end = aln.loc_align(seq, graph_end, 16)
 	candidates = []
@@ -22,9 +25,8 @@ for h, seq in fr.fasta_source(sys.argv[1]):
 				candidates.append((pos_start[0], pos_end[1], pos_start[2] + pos_end[2]))
 
 	#print seq
-	#assert len(candidates) <= 1
 	if len(candidates) == 0:
-		print "cdr3 not found"
+		#print "cdr3 not found"
 		continue
 	
 	maxScore = 0
@@ -35,4 +37,6 @@ for h, seq in fr.fasta_source(sys.argv[1]):
 			maxScore = c[2]
 	#for c in candidates:
 	cdr = seq[cand[0] : cand[1] + 1]
-	print cand, cdr, str(Seq(cdr).translate())
+	sys.stdout.write(">{0}\n{1}\n".format(h, cdr))
+	sys.stderr.write(str(counter) + "\n")
+	#print counter, cand, cdr, str(Seq(cdr).translate())
