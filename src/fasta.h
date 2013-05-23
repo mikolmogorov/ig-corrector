@@ -22,28 +22,25 @@ struct FastaRecord
 class FastaReader
 {
 public:
-	explicit FastaReader(const std::string & fileName): 
-		inputStream_(fileName.c_str()),
-		fileName_(fileName) {}
-
+	explicit FastaReader(std::istream& stream): 
+		inputStream_(stream)
+	{}
 	size_t 	GetSequences(std::vector<FastaRecord>& record);
 	bool 	IsOk() const;
 private:
 	void ValidateSequence(std::string & sequence);
 	void ValidateHeader(std::string & header);
 
-	std::ifstream inputStream_;
-	std::string fileName_;
+	std::istream& inputStream_;
 };
 
 class FastaWriter
 {
 public:
-	static void WriteSequence(const std::string & fileName, 
+	static void WriteSequence(std::ostream& out, 
 								const std::string & header, 
 								const std::string & sequence)
 	{
-		std::ofstream out(fileName.c_str());
 		out << ">" << header << std::endl;
 		for(size_t i = 0; i < sequence.size(); i += 80)
 		{

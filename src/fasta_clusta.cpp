@@ -6,11 +6,12 @@
 #include <iostream>
 #include <algorithm>
 #include <memory>
-#include <cassert>
 #include <set>
+#include <getopt.h>
 #include "fasta.h"
 #include "disjoint_set.h"
 #include "edit_distance.h"
+//#include <cassert>
 
 typedef std::vector<FastaRecord> FastaSequences;
 typedef std::unordered_map<std::string, std::string> FastaHash;
@@ -23,29 +24,42 @@ void clusterSeqs(KmerHash& kmerHash, FastaHash& fastaHash, ClusterHash& clusters
 void makeFastaHash(FastaSequences& seqs, FastaHash& hash);
 void outputClusters(FastaHash& fastaHash, ClusterHash& clusterHash);
 
-int main(int argc, char** argv)
+bool parseArgs(int argc, char** argv, int& kmerSize, int& nMissmatch, std::string& filename);
+
+int main(int argc, char* argv[])
 {
+	int KMER = 0;
+	int THRESHOLD = 0;
+	std::string fileName;
 
-	if (argc < 4)
+	if (!parseArgs(argc, argv, KMER, THRESHOLD, fileName))
 	{
-		std::cout << "USAGE: anchors kmer nmissmatch filename\n";
-		return 0;
+		return 1;
 	}
-
-	const int KMER = atoi(argv[1]);
-	const int THRESHOLD = atoi(argv[2]);
 
 	FastaSequences seqs;
 	FastaHash seqHash;
 	KmerHash kmerHash;
 	ClusterHash clusterHash;
-
-	FastaReader reader(argv[3]);
-	if (!reader.IsOk())
+	
+	std::istream* stream = nullptr;
+	std::ifstream fstream;
+	if (fileName.empty())
 	{
-		std::cout << "error opening " << argv[3] << std::endl;
-		return 1;
+		stream = &std::cin;
 	}
+	else
+	{
+		fstream.open(fileName);
+		if (!fstream.is_open())
+		{
+			std::cout << "error opening " << fileName << std::endl;
+			return 1;
+		}
+		stream = &fstream;
+	}
+
+	FastaReader reader(*stream);
 	try
 	{
 		reader.GetSequences(seqs);
@@ -68,6 +82,47 @@ int main(int argc, char** argv)
 	return 0;
 }
 
+bool parseArgs(int argc, char** argv, int& kmerSize, int& nMissmatch, std::string& filename)
+{
+	auto printUsage = []()
+	{
+		std::cerr 	<< "\nUSAGE: fasta_clusta -k kmer_size -m num_missmatch reads_file\n"
+					<< "If reads_file is not set, reading from standard input\n\n";
+	};
+	const char* optString = "k:m:?";
+	int opt = 0;
+	bool kmerSet = false;
+	bool missSet = false;
+	while( (opt = getopt(argc, argv, optString)) != -1 )
+	{
+		switch(opt)
+		{
+		case 'k':
+			kmerSize = atoi(optarg);
+			kmerSet = true;
+			break;
+		case 'm':
+			nMissmatch = atoi(optarg);
+			missSet = true;
+			break;
+		case '?':
+			printUsage();
+			return false;
+			break;
+		}
+	}
+	if (!kmerSet || !missSet)
+	{
+		printUsage();
+		return false;
+	}
+	if (argc - optind > 0)
+	{
+		filename = *(argv + optind);
+	}
+	return true;
+}
+
 void extractKmers(FastaSequences& sequences, KmerHash& hash, int kmerLen)
 {
 	int kmerCounter = 0;
@@ -75,7 +130,7 @@ void extractKmers(FastaSequences& sequences, KmerHash& hash, int kmerLen)
 
 	for (FastaRecord& record : sequences)
 	{
-		assert(hash.find(record.description) == hash.end());
+		//assert(hash.find(record.description) == hash.end());
 		for (size_t k = 0; k < record.sequence.length() - kmerLen; ++k)
 		{
 			std::string kmer(record.sequence, k, kmerLen);

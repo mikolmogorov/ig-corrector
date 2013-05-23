@@ -58,7 +58,7 @@ size_t FastaReader::GetSequences(std::vector<FastaRecord> & record)
 	catch (ParseException & e)
 	{
 		std::stringstream ss;
-		ss << "parse error in " << fileName_ << " on line " << line << ": " << e.what();
+		ss << "input parse error on line " << line << ": " << e.what();
 		throw std::runtime_error(ss.str());
 	}
 
