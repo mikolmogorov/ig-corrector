@@ -1,8 +1,8 @@
-def fasta_source(filename):
-	fd = open(filename, "r")
+def _fasta_source(stream):
+	#fd = open(filename, "r")
 	seq = ""
 	header = ""
-	for line in fd:
+	for line in stream:
 		l = line.strip("\n")
 		if l.startswith(">"):
 			if len(header) > 0:
@@ -13,15 +13,19 @@ def fasta_source(filename):
 			seq += l
 	if seq != "":
 		yield header, seq
-	fd.close()
+	#fd.close()
+
 
 def get_seqs(filename):
+	return read_fasta(open(filename, "r"))
+
+def read_fasta(stream):
 	seqs = {}
-	for h, seq in fasta_source(filename):
+	for h, seq in _fasta_source(stream):
 		seqs[h] = seq
 	return seqs
+	
 
-def iter_kmers(seq, k):
-    n = len(seq)
-    for i in xrange(0, n - k + 1):
-        yield i, seq[i:i + k]
+def write_fasta(fasta_dict, stream):
+	for h in fasta_dict:
+		stream.write(">{0}\n{1}\n".format(h, fasta_dict[h]))

@@ -2,6 +2,8 @@
 
 import fasta_reader as fr
 import sys
+import editdist
+import subprocess
 from Bio import pairwise2
 from itertools import product, combinations
 
@@ -30,7 +32,43 @@ def parse_cdr(filename):
 			cl.seqs.append(Sequence(header, line))
 	return clusters
 
-def correct_indels(cdr_map, weight, threshold):
+
+def get_consensus(headers, seqs):
+	if len(headers) == 1:
+		return seqs[headers[0]]
+
+	align = align_cluster(headers, seqs)
+
+	seq_len = len(align[align.keys()[0]])
+	s = ""
+	for i in xrange(seq_len):
+		freq = {}
+		for h in align:
+			freq[align[h][i]] = freq.get(align[h][i], 0) + 1
+
+		n = max(freq, key = freq.get)
+		if n != "-":
+			s += n
+	return s
+
+
+def align_cluster(headers, seqs):
+	fasta_dict = {h: seqs[h] for h in headers}
+	#sys.stderr.write(str(fasta_dict))
+
+	cmdline = "muscle -diags -maxiters 2"
+	child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
+							stderr = subprocess.PIPE, shell = True)
+	fr.write_fasta(fasta_dict, child.stdin)
+	#fr.write_fasta(fasta_dict, open("dump.fasta", "w"))
+	child.stdin.close()
+	#for line in child.stderr:
+	#	sys.stderr.write(line)
+	out_dict = fr.read_fasta(child.stdout)
+	return out_dict
+
+def correct_indels(cdr_map, weight, seqs, threshold):
+	cons_cache = {}
 	sorted_r = sorted(weight, key = weight.get, reverse = True)
 	for cdr1, cdr2 in combinations(sorted_r, 2):
 		if cdr1 not in cdr_map or cdr2 not in cdr_map:
@@ -42,8 +80,19 @@ def correct_indels(cdr_map, weight, threshold):
 		for i in xrange(len(align[0])):
 			if align[0][i] != align[1][i] and align[0][i] != "-" and align[1][i] != "-":
 				n_miss += 1
-		if n_miss != 0:
-			continue
+
+		#sys.stderr.write(".")
+		if n_miss > 0:
+			if len(cdr_map[cdr1]) > 100 or len(cdr_map[cdr2]) > 100:
+				continue
+			if cdr1 not in cons_cache:
+				cons_cache[cdr1] = get_consensus(cdr_map[cdr1], seqs)
+			if cdr2 not in cons_cache:
+				cons_cache[cdr2] = get_consensus(cdr_map[cdr2], seqs)
+			dist = editdist.distance(cons_cache[cdr1], cons_cache[cdr2])
+			sys.stderr.write(" " + str(dist) + " ")
+			if dist > 4:
+				continue
 		
 		if weight[cdr1] / weight[cdr2] >= threshold:
 			true_cdr, false_cdr = cdr1, cdr2
@@ -60,9 +109,8 @@ def correct_indels(cdr_map, weight, threshold):
 		del cdr_map[false_cdr]
 		weight[true_cdr] += weight[false_cdr]
 		del weight[false_cdr]
-
-def correct_missmatches(cdr_map, weight, seqs):
-	pass
+		if len(cdr_map[true_cdr]) <= 100:
+			cons_cache[true_cdr] = get_consensus(cdr_map[true_cdr], seqs)
 
 
 def correct_cdr(cluster, seqs):
@@ -80,8 +128,8 @@ def correct_cdr(cluster, seqs):
 	if len(cdr_map) == 1:
 		return [cluster]
 	
-	correct_indels(cdr_map, weight, THRESHOLD)
-	correct_missmatches(cdr_map, weight, seqs)
+	correct_indels(cdr_map, weight, seqs, THRESHOLD)
+	#correct_missmatches(cdr_map, weight, seqs)
 
 	#reconstruct clusters
 	clusters = []
