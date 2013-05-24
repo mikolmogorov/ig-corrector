@@ -19,6 +19,8 @@ struct FastaRecord
 	size_t seqId;
 };
 
+typedef std::vector<FastaRecord> FastaSequences;
+
 class FastaReader
 {
 public:
