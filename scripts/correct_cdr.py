@@ -4,7 +4,7 @@ import fasta_reader as fr
 import sys
 import editdist
 import subprocess
-from Bio import pairwise2
+from Bio import cpairwise2
 from itertools import product, combinations
 
 class Sequence:
@@ -44,7 +44,8 @@ def get_consensus(headers, seqs):
 	for i in xrange(seq_len):
 		freq = {}
 		for h in align:
-			freq[align[h][i]] = freq.get(align[h][i], 0) + 1
+			mult = int(h.split("_")[1])
+			freq[align[h][i]] = freq.get(align[h][i], 0) + mult
 
 		n = max(freq, key = freq.get)
 		if n != "-":
@@ -54,15 +55,13 @@ def get_consensus(headers, seqs):
 
 def align_cluster(headers, seqs):
 	fasta_dict = {h: seqs[h] for h in headers}
-	#sys.stderr.write(str(fasta_dict))
 
-	cmdline = "muscle -diags -maxiters 2"
-	child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
-							stderr = subprocess.PIPE, shell = True)
+	cmdline = ["muscle", "-diags", "-maxiters", "2", "-quiet"]
+	child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
 	fr.write_fasta(fasta_dict, child.stdin)
-	#fr.write_fasta(fasta_dict, open("dump.fasta", "w"))
+	#fr.write_fasta(fasta_dict, open("dump-muscle.fasta", "w"))
 	child.stdin.close()
-	#for line in child.stderr:
+		#for line in child.stderr:
 	#	sys.stderr.write(line)
 	out_dict = fr.read_fasta(child.stdout)
 	return out_dict
@@ -74,7 +73,7 @@ def correct_indels(cdr_map, weight, seqs, threshold):
 		if cdr1 not in cdr_map or cdr2 not in cdr_map:
 			continue
 
-		align = pairwise2.align.globalms(cdr1, cdr2, 0, -1, -2, -2)[0]
+		align = cpairwise2.align.globalms(cdr1, cdr2, 0, -1, -2, -2)[0]
 		#print align
 		n_miss = 0
 		for i in xrange(len(align[0])):
