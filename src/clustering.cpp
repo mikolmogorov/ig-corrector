@@ -147,7 +147,8 @@ void Clusterisator::outputClusters(FastaSet& output)
 
 	for (auto &cl : preClusters)
 	{
-		this->spltCluster(cl.second, clusters);
+		//this->spltCluster(cl.second, clusters);
+		clusters.push_back(cl.second);
 	}
 
 	for (auto &itClust : clusters)
