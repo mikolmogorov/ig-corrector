@@ -19,6 +19,7 @@ def _fasta_source(stream):
 def get_seqs(filename):
 	return read_fasta(open(filename, "r"))
 
+
 def read_fasta(stream):
 	seqs = {}
 	for h, seq in _fasta_source(stream):

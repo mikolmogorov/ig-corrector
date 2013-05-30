@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import fasta_reader as fr
+import msa
 import sys
 import editdist
-import correct_cdr as cc
 from itertools import product, combinations
 
 class Cluster:
@@ -14,13 +14,21 @@ def cluster_dist(clust1, clust2, seqs):
 	dist_sum = 0.0
 	for h1, h2 in product(clust1.seqs, clust2.seqs):
 		#print seq1, seq2
-		dist_sum += editdist.distance(seqs[h1], seqs[h2])
+		dist_sum += seq_disstance(h1, h2, seqs)
 		#print dist_sum
 	return dist_sum / (len(clust1.seqs) * len(clust2.seqs))
 
 
+def seq_disstance(seq1, seq2, seqs):
+	key = dict_key(seq1, seq2)
+	if key not in seq_disstance.cache:
+		seq_disstance.cache[key] = editdist.distance(seqs[seq1], seqs[seq2])
+	return seq_disstance.cache[key]
+seq_disstance.cache = {}
+
+
 def cons_score(heads, seqs):
-	align = cc.align_cluster(heads, seqs)
+	align = msa.align_muscle(heads, seqs)
 	score = 0
 	seq_len = len(align[align.keys()[0]])
 	for i in xrange(seq_len):
@@ -46,9 +54,14 @@ def dict_key(c1, c2):
 	return tuple(sorted([c1, c2]))
 
 
-def step(distances, clusters, seqs):
+def step(distances, clusters, seqs, cutoff):
 	cl1, cl2 = min(distances, key = distances.get)
-	print "merging", cl1, cl2, distances[dict_key(cl1, cl2)]
+	key = dict_key(cl1, cl2)
+
+	if distances[key] > cutoff:
+		return False
+
+	sys.stderr.write("merging {0} {1} {2}\n".format(cl1, cl2, distances[key]))
 	assert cl1 in clusters and cl2 in clusters
 
 	clusters[cl1].seqs += clusters[cl2].seqs
@@ -61,9 +74,10 @@ def step(distances, clusters, seqs):
 		assert dict_key(cl, cl2) not in distances
 	del clusters[cl2]
 
+	return True
 
-def main():
-	seqs = fr.get_seqs(sys.argv[1])
+
+def cluster(seqs, cutoff):
 	clusters = {}
 	counter = 0
 	for s in seqs:
@@ -76,9 +90,29 @@ def main():
 		d = cluster_dist(clusters[cl1], clusters[cl2], seqs)
 		distances[dict_key(cl1, cl2)] = d
 
-	while len(clusters) > 1:
-		step(distances, clusters, seqs)
-		print calc_score(clusters, seqs)
+	cutoff = float(sys.argv[2])
+	while True:
+		res = step(distances, clusters, seqs, cutoff)
+		if not res:
+			break
+		sys.stderr.write(str(calc_score(clusters, seqs)) + "\n")
+	
+	return {n : cl.seqs for n, cl in clusters.iteritems()}
+	
+
+def main():
+	if len(sys.argv) < 3:
+		sys.stderr.write("USAGE: hierarchial_clust.py fasta_file cutoff")
+		return -1
+		
+	seqs = fr.get_seqs(sys.argv[1])
+	clusters = cluster(seqs, sys.argv[2])
+
+	for cl in clusters.values():
+		for h in cl:
+			print ">{0}\n{1}".format(h, seqs[h])
+		print ""
+
 
 if __name__ == "__main__":
 	main()

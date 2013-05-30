@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import fasta_reader as fr
+import msa
 import sys
 import editdist
 import subprocess
@@ -33,38 +34,6 @@ def parse_cdr(filename):
 	return clusters
 
 
-def get_consensus(headers, seqs):
-	if len(headers) == 1:
-		return seqs[headers[0]]
-
-	align = align_cluster(headers, seqs)
-
-	seq_len = len(align[align.keys()[0]])
-	s = ""
-	for i in xrange(seq_len):
-		freq = {}
-		for h in align:
-			mult = int(h.split("_")[1])
-			freq[align[h][i]] = freq.get(align[h][i], 0) + mult
-
-		n = max(freq, key = freq.get)
-		if n != "-":
-			s += n
-	return s
-
-
-def align_cluster(headers, seqs):
-	fasta_dict = {h: seqs[h] for h in headers}
-
-	cmdline = ["muscle", "-diags", "-maxiters", "2", "-quiet"]
-	child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
-	fr.write_fasta(fasta_dict, child.stdin)
-	#fr.write_fasta(fasta_dict, open("dump-muscle.fasta", "w"))
-	child.stdin.close()
-		#for line in child.stderr:
-	#	sys.stderr.write(line)
-	out_dict = fr.read_fasta(child.stdout)
-	return out_dict
 
 def correct_indels(cdr_map, weight, seqs, threshold):
 	cons_cache = {}
@@ -85,9 +54,9 @@ def correct_indels(cdr_map, weight, seqs, threshold):
 			if len(cdr_map[cdr1]) > 100 or len(cdr_map[cdr2]) > 100:
 				continue
 			if cdr1 not in cons_cache:
-				cons_cache[cdr1] = get_consensus(cdr_map[cdr1], seqs)
+				cons_cache[cdr1] = msa.get_consensus(cdr_map[cdr1], seqs)
 			if cdr2 not in cons_cache:
-				cons_cache[cdr2] = get_consensus(cdr_map[cdr2], seqs)
+				cons_cache[cdr2] = msa.get_consensus(cdr_map[cdr2], seqs)
 			dist = editdist.distance(cons_cache[cdr1], cons_cache[cdr2])
 			sys.stderr.write(" " + str(dist) + " ")
 			if dist > 4:
@@ -109,7 +78,7 @@ def correct_indels(cdr_map, weight, seqs, threshold):
 		weight[true_cdr] += weight[false_cdr]
 		del weight[false_cdr]
 		if len(cdr_map[true_cdr]) <= 100:
-			cons_cache[true_cdr] = get_consensus(cdr_map[true_cdr], seqs)
+			cons_cache[true_cdr] = msa.get_consensus(cdr_map[true_cdr], seqs)
 
 
 def correct_cdr(cluster, seqs):

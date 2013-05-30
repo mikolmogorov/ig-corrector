@@ -2,8 +2,8 @@
 
 import sys
 import subprocess
-import correct_cdr as cc
 import fasta_reader as fr
+import msa
 
 class Sequence:
 	def __init__(self, hdr, seq):
@@ -56,7 +56,7 @@ def main():
 		clusters = split_cluster(cl, seqs)
 		for c in clusters:
 			heads = [s.header for s in c.seqs]
-			cons = cc.get_consensus(heads, seqs)
+			cons = msa.get_consensus(heads, seqs)
 			size = 0
 			for s in c.seqs:
 				size += int(s.header.split("_")[1]) 
@@ -70,5 +70,5 @@ def main():
 if __name__ == "__main__":
 	#seqs = fr.read_fasta(open("dump-muscle.fasta", "r"))
 	#heads = seqs.keys()
-	#cons = cc.get_consensus(heads, seqs)
+	#cons = msa.get_consensus(heads, seqs)
 	main()
