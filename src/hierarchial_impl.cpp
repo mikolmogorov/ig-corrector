@@ -42,10 +42,10 @@ void HierarchialClust::cluster(const FastaSequences& seqs, FastaSet& output, flo
 		}
 	}
 
-	for (;;)
+	while (_clusters.size() > 1)
 	{
 		bool ret = this->step();
-		if (!ret || _clusters.size() == 1) break;
+		if (!ret) break;
 	}
 
 	this->outputClusters(output);

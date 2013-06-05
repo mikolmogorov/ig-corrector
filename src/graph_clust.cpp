@@ -4,8 +4,6 @@
 #include "fasta.h"
 #include "graph_impl.h"
 
-//void outputClusters(FastaSet& clusters);
-
 bool parseArgs(int argc, char** argv, int& kmerSize, int& nMissmatch, std::string& filename);
 
 int main(int argc, char* argv[])
@@ -97,19 +95,3 @@ bool parseArgs(int argc, char** argv, int& kmerSize, int& nMissmatch, std::strin
 	}
 	return true;
 }
-
-/*
-void outputClusters(FastaSet& clusters)
-{
-	int counter = 0;
-	for (auto &clust : clusters)
-	{
-		std::cout << "Cluster" << counter << "_" << clust.size() << std::endl;
-		for (auto &itSeq : clust)
-		{
-			std::cout << ">" << itSeq.description << std::endl << itSeq.sequence << std::endl;
-		}
-		++counter;
-		std::cout << std::endl;
-	}
-}*/
