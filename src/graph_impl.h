@@ -9,16 +9,7 @@
 #include <memory>
 #include "fasta.h"
 #include "disjoint_set.h"
-
-typedef std::vector<std::list<FastaRecord>> FastaSet;
-
-struct pair_hash 
-{
-    size_t operator() (const std::pair<int,int>& v) const 
-	{
-        return v.first * 31 + v.second;
-    }
-};
+#include "common.h"
 
 class Clusterisator
 {
@@ -38,8 +29,6 @@ private:
 	void clusterSeqs(KmerHash& kmerHash, FastaHash& fastaHash, ClusterHash& clusters, 
 					int kmerLen, int nMissmatch);
 	void outputClusters(FastaSet& output);
-	void splitCliques();
-	void spltCluster(std::unordered_set<int> vertex, std::list<std::unordered_set<int>>& out);
 
 	int _nMissmatches;
 	int _kmerSize;
@@ -49,7 +38,7 @@ private:
 	ClusterHash _clusterHash;
 	IdToHeader _seqEnum;
 
-	std::unordered_set<std::pair<int, int>, pair_hash> _adjacent;
+	std::unordered_set<std::pair<int, int>, pair_hash<int>> _adjacent;
 };
 
 

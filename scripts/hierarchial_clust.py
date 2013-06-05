@@ -90,23 +90,22 @@ def cluster(seqs, cutoff):
 		d = cluster_dist(clusters[cl1], clusters[cl2], seqs)
 		distances[dict_key(cl1, cl2)] = d
 
-	cutoff = float(sys.argv[2])
 	while True:
 		res = step(distances, clusters, seqs, cutoff)
-		if not res:
+		if not res or len(clusters) == 1:
 			break
-		sys.stderr.write(str(calc_score(clusters, seqs)) + "\n")
+		#sys.stderr.write(str(calc_score(clusters, seqs)) + "\n")
 	
 	return {n : cl.seqs for n, cl in clusters.iteritems()}
 	
 
 def main():
 	if len(sys.argv) < 3:
-		sys.stderr.write("USAGE: hierarchial_clust.py fasta_file cutoff")
+		sys.stderr.write("USAGE: hierarchial_clust.py fasta_file cutoff\n")
 		return -1
 		
 	seqs = fr.get_seqs(sys.argv[1])
-	clusters = cluster(seqs, sys.argv[2])
+	clusters = cluster(seqs, float(sys.argv[2]))
 
 	for cl in clusters.values():
 		for h in cl:

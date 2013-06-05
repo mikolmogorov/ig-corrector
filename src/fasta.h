@@ -20,6 +20,7 @@ struct FastaRecord
 };
 
 typedef std::vector<FastaRecord> FastaSequences;
+typedef std::vector<FastaSequences> FastaSet;
 
 class FastaReader
 {
@@ -52,5 +53,19 @@ public:
 		}
 	}
 };
+
+inline void writeFastaSet(const FastaSet& set, std::ostream& out)
+{
+	int counter = 0;
+	for (FastaSet::const_iterator itCluster = set.begin(); itCluster != set.end(); ++itCluster)
+	{
+		out << "=Cluster_" << counter << "_" << itCluster->size() << std::endl;
+		for (FastaSequences::const_iterator itSeq = itCluster->begin(); itSeq != itCluster->end(); ++itSeq)
+		{
+			FastaWriter::WriteSequence(out, itSeq->description, itSeq->sequence);
+		}
+		++counter;
+	}
+}
 
 #endif 

@@ -5,7 +5,7 @@ import msa
 import sys
 import editdist
 import subprocess
-from Bio import cpairwise2
+from Bio import pairwise2
 from itertools import product, combinations
 
 class Sequence:
@@ -42,7 +42,7 @@ def correct_indels(cdr_map, weight, seqs, threshold):
 		if cdr1 not in cdr_map or cdr2 not in cdr_map:
 			continue
 
-		align = cpairwise2.align.globalms(cdr1, cdr2, 0, -1, -2, -2)[0]
+		align = pairwise2.align.globalms(cdr1, cdr2, 0, -1, -2, -2)[0]
 		#print align
 		n_miss = 0
 		for i in xrange(len(align[0])):
@@ -51,8 +51,8 @@ def correct_indels(cdr_map, weight, seqs, threshold):
 
 		#sys.stderr.write(".")
 		if n_miss > 0:
-			if len(cdr_map[cdr1]) > 100 or len(cdr_map[cdr2]) > 100:
-				continue
+			#if len(cdr_map[cdr1]) > 100 or len(cdr_map[cdr2]) > 100:
+			#	continue
 			if cdr1 not in cons_cache:
 				cons_cache[cdr1] = msa.get_consensus(cdr_map[cdr1], seqs)
 			if cdr2 not in cons_cache:
@@ -77,8 +77,8 @@ def correct_indels(cdr_map, weight, seqs, threshold):
 		del cdr_map[false_cdr]
 		weight[true_cdr] += weight[false_cdr]
 		del weight[false_cdr]
-		if len(cdr_map[true_cdr]) <= 100:
-			cons_cache[true_cdr] = msa.get_consensus(cdr_map[true_cdr], seqs)
+		#if len(cdr_map[true_cdr]) <= 100:
+		cons_cache[true_cdr] = msa.get_consensus(cdr_map[true_cdr], seqs)
 
 
 def correct_cdr(cluster, seqs):

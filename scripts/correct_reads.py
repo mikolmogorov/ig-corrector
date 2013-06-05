@@ -4,6 +4,7 @@ import sys
 import subprocess
 import fasta_reader as fr
 import msa
+import hierarchial_clust as hc
 
 class Sequence:
 	def __init__(self, hdr, seq):
@@ -31,7 +32,11 @@ def parse_cluster(stream):
 	return clusters
 
 
-def split_cluster(cluster, seqs):
+def split_cluster(cluster):
+	if len(cluster.seqs) == 1:
+		return [cluster]
+		
+	sys.stderr.write("graph cluster\n")
 	#return [cluster]
 	fasta_dict = {s.header : s.seq for s in cluster.seqs}
 	cmdline = ["../src/fasta_clusta", "-k", "21", "-m", "4"]
@@ -41,7 +46,26 @@ def split_cluster(cluster, seqs):
 	child.stdin.close()
 	#for line in child.stderr:
 	#	sys.stderr.write(line)
-	out_clusters = parse_cluster(child.stdout)
+	preclusters = parse_cluster(child.stdout)
+	out_clusters = []
+	for cl in preclusters:
+		out_clusters += hierarchial_split(cl)
+	return out_clusters
+
+
+def hierarchial_split(precluster):
+	if len(precluster.seqs) == 1:
+		return [precluster]
+
+	sys.stderr.write("hierarchial\n")
+	fasta_dict = {s.header : s.seq for s in precluster.seqs}
+	clusters = hc.cluster(fasta_dict, 4.0)
+
+	out_clusters = []
+	for cl in clusters:
+		out_clusters.append(Cluster())
+		for h in clusters[cl]:
+			out_clusters[-1].seqs.append(Sequence(h, fasta_dict[h]))
 	return out_clusters
 
 
@@ -53,7 +77,7 @@ def main():
 	init_clusters = parse_cluster(open(sys.argv[1], "r"))
 	for cl in init_clusters:
 		sys.stderr.write(str(len(cl.seqs)) + " ")
-		clusters = split_cluster(cl, seqs)
+		clusters = split_cluster(cl)
 		for c in clusters:
 			heads = [s.header for s in c.seqs]
 			cons = msa.get_consensus(heads, seqs)

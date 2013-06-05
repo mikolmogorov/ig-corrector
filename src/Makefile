@@ -1,16 +1,22 @@
-all: fasta_clusta
+all: graph_clust hierarchial_clust
 
-fasta_clusta: fasta_clusta.o fasta.o clustering.o bron_kerbosch.o
-	g++ -o fasta_clusta fasta_clusta.o fasta.o clustering.o bron_kerbosch.o
+graph_clust: graph_clust.o fasta.o graph_impl.o
+	g++ -o graph_clust graph_clust.o fasta.o graph_impl.o 
 
-fasta_clusta.o: fasta.h fasta_clusta.cpp clustering.h
-	g++ -c fasta_clusta.cpp -std=c++11 -O2
+graph_clust.o: fasta.h graph_clust.cpp graph_impl.h
+	g++ -c graph_clust.cpp -std=c++11 -O2
 
 fasta.o: fasta.h fasta.cpp
 	g++ -c fasta.cpp -O2
 
-clustering.o: clustering.cpp clustering.h fasta.h bron_kerbosch.h
-	g++ -c clustering.cpp -std=c++11 -O2
+graph_impl.o: graph_impl.cpp graph_impl.h fasta.h common.h
+	g++ -c graph_impl.cpp -std=c++11 -O2
 
-bron_kerbosch.o: bron_kerbosch.cpp bron_kerbosch.h
-	g++ -c bron_kerbosch.cpp -std=c++11 -O2
+hierarchial_clust: hierarchial_clust.o fasta.o hierarchial_impl.o
+	g++ -o hierarchial_clust hierarchial_clust.o fasta.o hierarchial_impl.o
+
+hierarchial_clust.o: fasta.h hierarchial_impl.h hierarchial_clust.cpp
+	g++ -c hierarchial_clust.cpp -std=c++11 -O2
+
+hierarchial_impl.o: fasta.h edit_distance.h hierarchial_impl.cpp common.h
+	g++ -c hierarchial_impl.cpp -std=c++11 -O2

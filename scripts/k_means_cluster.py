@@ -15,7 +15,7 @@ def k_means(sequences, k):
 
 	for i in xrange(0, 100):
 		clusters = {i : [] for i in xrange(k)}
-		sys.stderr.write(str(i) + " ")
+		#sys.stderr.write(str(i) + " ")
 
 		for header, seq in sequences.iteritems():
 			min_dist = sys.maxint, 0
@@ -46,7 +46,7 @@ def k_means(sequences, k):
 
 		centers = new_centers
 		old_centers.append(centers)
-	sys.stderr.write("\n")
+	#sys.stderr.write("\n")
 	return clusters
 
 

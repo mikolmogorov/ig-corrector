@@ -2,9 +2,9 @@
 #include <stdexcept>
 #include <getopt.h>
 #include "fasta.h"
-#include "clustering.h"
+#include "graph_impl.h"
 
-void outputClusters(FastaSequences& seqs, FastaSet& clusters);
+//void outputClusters(FastaSet& clusters);
 
 bool parseArgs(int argc, char** argv, int& kmerSize, int& nMissmatch, std::string& filename);
 
@@ -52,7 +52,8 @@ int main(int argc, char* argv[])
 	FastaSet outClusters;
 	Clusterisator clusterisator;
 	clusterisator.doJob(seqs, outClusters, KMER, THRESHOLD);
-	outputClusters(seqs, outClusters);
+	writeFastaSet(outClusters, std::cout);
+	//outputClusters(outClusters);
 	return 0;
 }
 
@@ -60,7 +61,7 @@ bool parseArgs(int argc, char** argv, int& kmerSize, int& nMissmatch, std::strin
 {
 	auto printUsage = []()
 	{
-		std::cerr 	<< "\nUSAGE: fasta_clusta -k kmer_size -m num_missmatch reads_file\n"
+		std::cerr 	<< "\nUSAGE: graph_clust -k kmer_size -m num_missmatch reads_file\n"
 					<< "If reads_file is not set, reading from standard input\n\n";
 	};
 	const char* optString = "k:m:?";
@@ -97,7 +98,8 @@ bool parseArgs(int argc, char** argv, int& kmerSize, int& nMissmatch, std::strin
 	return true;
 }
 
-void outputClusters(FastaSequences& seqs, FastaSet& clusters)
+/*
+void outputClusters(FastaSet& clusters)
 {
 	int counter = 0;
 	for (auto &clust : clusters)
@@ -110,4 +112,4 @@ void outputClusters(FastaSequences& seqs, FastaSet& clusters)
 		++counter;
 		std::cout << std::endl;
 	}
-}
+}*/

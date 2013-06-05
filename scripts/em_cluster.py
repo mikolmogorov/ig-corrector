@@ -63,7 +63,7 @@ def em_cluster(fasta_dict):
 	n_seqs = len(sequences)
 	distances = precalc_dist(sequences)
 
-	sigma = 1.0 / 80
+	sigma = 1.0 / 60
 
 	#while True:
 	for _ in xrange(20):
