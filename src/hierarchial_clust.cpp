@@ -65,7 +65,6 @@ bool parseArgs(int argc, char** argv, float& cutoff, bool& quiet, std::string& f
 	int opt = 0;
 	bool cutoffSet = false;
 	quiet = false;
-	//bool missSet = false;
 	while( (opt = getopt(argc, argv, optString)) != -1 )
 	{
 		switch(opt)

@@ -113,12 +113,10 @@ def loc_align(seqence, root, threshold):
 			D[node][n] = score
 			maxScore = max(maxScore, score)
 			if score >= threshold:
-				try:
-					p = prev[node][n]
-					if D[p[0]][p[1]] <= score:
-						candidates.remove(p)
-				except:
-					pass
+				p = prev[node][n]
+				if D[p[0]][p[1]] <= score:
+					candidates = filter(lambda e: e != p, candidates)
+
 				candidates.append((node, n))
 
 	alignments = []
@@ -136,7 +134,7 @@ def loc_align(seqence, root, threshold):
 	
 	if len(alignments) == 0:
 		return []
-	
+	#print alignments
 	result = []
 	maxPrev = 0
 	for i in xrange(1, len(alignments)):
@@ -151,7 +149,8 @@ def loc_align(seqence, root, threshold):
 	return result
 
 def main():
-	graph = build_graph("WG[QKRS]")
+	#graph = build_graph("WG[QKRS]")
+	graph = build_graph("YYC")
 	print loc_align("TATTACTGTACAAATCCCACAGTCCGGGACTACTTGGGCAAAGGGACCACGGTCACCGTCTCCTCAGGCTCGAGTGCGTCTACAA", graph, 15)
 	#print loc_align( "ATAGATAGACGCCTACGGCAGCCGCTGGATTGTTATTACTCGCGGCCCAGCCGGCCATGGCCGAAGTGCAGC" + 
 	#				"TGGTGCAGTCTGGGGGAACCTTGGTGCAGGTTGGGGGTTCTCTGACACTCTCCTGTGCAGCCTCTGGATTCA" +
