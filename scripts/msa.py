@@ -1,11 +1,12 @@
-
 import subprocess
 import fasta_reader as fr
+
+MUSCLE_PATH = "muscle"
 
 def align_muscle(headers, seqs):
 	fasta_dict = {h: seqs[h] for h in headers}
 
-	cmdline = ["muscle", "-diags", "-maxiters", "2", "-quiet"]
+	cmdline = [MUSCLE_PATH, "-diags", "-maxiters", "2", "-quiet"]
 	child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
 	fr.write_fasta(fasta_dict, child.stdin)
 	#fr.write_fasta(fasta_dict, open("dump-muscle.fasta", "w"))
@@ -23,15 +24,16 @@ def get_consensus(headers, seqs):
 	align = align_muscle(headers, seqs)
 
 	seq_len = len(align[align.keys()[0]])
-	s = ""
+	result = ""
 	for i in xrange(seq_len):
 		freq = {}
 		for h in align:
-			mult = int(h.split("_")[1])
+			vals = h.split("_")
+			mult = int(vals[1]) if len(vals) > 1 else 1
 			freq[align[h][i]] = freq.get(align[h][i], 0) + mult
 
 		n = max(freq, key = freq.get)
 		if n != "-":
-			s += n
-	return s
+			result += n
+	return result
 

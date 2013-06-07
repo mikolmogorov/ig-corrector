@@ -1,50 +1,81 @@
 #!/usr/bin/env python
 
-import dna_vs_prot as aln
 import fasta_reader as fr
 import sys
-from Bio.Seq import Seq
+import subprocess
+from collections import namedtuple
+
+XALIGN_EXEC = "xalign"
+
+AlignInfo = namedtuple("AlignInfo", ["beg", "end", "score"])
+
+def xalign(fasta_dict, query, threshold):
+	cmdline = [XALIGN_EXEC, "-t", str(threshold), "-q", query]
+	child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
+	fr.write_fasta(fasta_dict, child.stdin)
+	child.stdin.close()
+
+	out_dict = {}
+	for line in child.stdout:
+		values = line.strip().split(" ")
+		header = values[0]
+		assert header.startswith(">")
+		out_dict[header[1:]] = []
+		for align in values[1:]:
+			start, end, score = align[1:-1].split(",")
+			out_dict[header[1:]].append(AlignInfo(int(start), int(end), int(score)))
+	return out_dict
 
 
-CDR3_START = "YYC"
-CDR3_END = "WG[QKRS]"
-#CDR3_END = "GTK"
+def find_cdr3(in_stream, start_seqs, end_seqs, threshold, out_stream):
+	MIN_CDR_LEN = 30
+	MAX_CDR_LEN = 90
+
+	seqs = fr.read_fasta(in_stream)
+	start_align = {k : [] for k in seqs.keys()}
+	end_align = {k : [] for k in seqs.keys()}
+	for qry in start_seqs:
+		for h, alns in xalign(seqs, qry, threshold).iteritems():
+			start_align[h] += alns
+	for qry in end_seqs:
+		for h, alns in xalign(seqs, qry, threshold).iteritems():
+			end_align[h] += alns
+
+	for h, seq in seqs.iteritems():
+		candidates = []
+		for start in start_align[h]:
+			for end in end_align[h]:
+				dist = end.beg - start.beg
+				if (MIN_CDR_LEN <= dist and dist <= MAX_CDR_LEN and 
+										start.beg > len(seq) / 2):
+					candidates.append(AlignInfo(start.beg, end.beg - 1, start.score + end.score))
+
+		if len(candidates) == 0:
+			sys.stderr.write(">" + h +": cdr3 not found\n")
+			continue
+		
+		max_score = 0
+		cand = None
+		for c in candidates:
+			if c.score > max_score:
+				cand = c
+				max_score = c.score
+
+		cdr = seq[cand.beg : cand.end + 1]
+		out_stream.write(">{0}\n{1}\n".format(h, cdr))
+		sys.stderr.write(">" + h + ": found with score " + str(max_score) + "\n")
 
 
 def main():
-	graph_start = aln.build_graph(CDR3_START)
-	graph_end = aln.build_graph(CDR3_END)
-
-	counter = 0
-
-	for h, seq in fr.get_seqs(sys.argv[1]).iteritems():
-		counter += 1
-		cdr_start = aln.loc_align(seq, graph_start, 16)
-		cdr_end = aln.loc_align(seq, graph_end, 16)
-		candidates = []
-		for pos_start in cdr_start:
-			for pos_end in cdr_end:
-				dist = pos_end[0] - pos_start[0]
-				if 20 <= dist and dist <= 80 and pos_start[0] > len(seq) / 2:
-					candidates.append((pos_start[0], pos_end[1], pos_start[2] + pos_end[2]))
-
-		#print seq
-		if len(candidates) == 0:
-			#print "cdr3 not found"
-			continue
-		
-		maxScore = 0
-		cand = None
-		for c in candidates:
-			if c[2] > maxScore:
-				cand = c
-				maxScore = c[2]
-		#for c in candidates:
-		cdr = seq[cand[0] : cand[1] + 1]
-		sys.stdout.write(">{0}\n{1}\n".format(h, cdr))
-		sys.stderr.write(str(counter) + "\n")
-		#print counter, cand, cdr, str(Seq(cdr).translate())
-
+	CDR3_START = "YYC"
+	CDR3_END = "WG[QKR]"
+	#CDR3_END = "GTK"
+	THRESHOLD = 15
+	if len(sys.argv) < 2:
+		print "USAGE: find_cdr3.py reads_file"
+		return
+	
+	find_cdr3(open(sys.argv[1], "r"), [CDR3_START], [CDR3_END], THRESHOLD, sys.stdout)
 
 if __name__ == "__main__":
 	main()

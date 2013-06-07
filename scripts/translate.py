@@ -4,6 +4,8 @@ from Bio.Seq import Seq
 import fasta_reader as fr
 import sys
 
-for h, seq in fr.get_seqs(sys.argv[1]).iteritems():
-	if int(h.split("_")[2]) > 0:
-		print ">{0}\n{1}".format(h, str(Seq(seq[2:]).translate()))
+TRHLD = 1
+for h, seq in fr.read_fasta(open(sys.argv[1], "r")).iteritems():
+	mult = int(h.split("_")[2]) if len(h.split("_")) > 2 else 1
+	if mult >= TRHLD:
+		print ">{0}\n{1}".format(h, str(Seq(seq[int(sys.argv[2]):]).translate()))

@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 		std::cout << ">" << seq.description << " ";
 		for (AlignInfo& aln : result)
 		{
-			std::cout << "(" << aln.start << " " << aln.end << " " << aln.score << ") ";
+			std::cout << "(" << aln.start << "," << aln.end << "," << aln.score << ") ";
 		}
 		std::cout << std::endl;
 	}

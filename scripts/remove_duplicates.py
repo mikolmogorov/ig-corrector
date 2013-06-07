@@ -19,7 +19,7 @@ def main():
 		print "USAGE: remove_duplicates.py filename"
 		return
 
-	newSeqs = remove_dups(fr.get_seqs(sys.argv[1]))
+	newSeqs = remove_dups(fr.read_fasta(open(sys.argv[1], "r")))
 	for h, seq in newSeqs.iteritems():
 		print ">{0}\n{1}".format(h, seq)
 
