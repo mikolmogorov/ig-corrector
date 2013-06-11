@@ -6,6 +6,7 @@ import sys
 import editdist
 from Bio import pairwise2
 from itertools import product, combinations
+from collections import defaultdict
 
 def merge_cdrs(cdr_map, weight, full_seqs, threshold):
 	cons_cache = {}
@@ -42,7 +43,7 @@ def merge_cdrs(cdr_map, weight, full_seqs, threshold):
 			true_cdr, false_cdr = cdr1, cdr2
 		#print false_cdr, "to", true_cdr, weight[false_cdr], weight[true_cdr], len(cdr_map)
 
-		cdr_map[true_cdr] += cdr_map[false_cdr]
+		cdr_map[true_cdr].extend(cdr_map[false_cdr])
 		del cdr_map[false_cdr]
 		weight[true_cdr] += weight[false_cdr]
 		del weight[false_cdr]
@@ -50,11 +51,12 @@ def merge_cdrs(cdr_map, weight, full_seqs, threshold):
 
 
 def correct_cluster(clust_seqs, full_seqs, threshold):
-	cdr_map = {}
+	#cdr_map = {}
+	cdr_map = defaultdict(list)
 	weight = {}
 	for seq_head, seq_cdr in clust_seqs.iteritems():
-		if not seq_cdr in cdr_map:
-			cdr_map[seq_cdr] = []
+		#if not seq_cdr in cdr_map:
+		#	cdr_map[seq_cdr] = []
 		cdr_map[seq_cdr].append(seq_head)
 		qty = int(seq_head.split("_")[1])
 		weight[seq_cdr] = weight.get(seq_cdr, 0) + qty

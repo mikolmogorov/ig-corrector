@@ -22,14 +22,14 @@ def cluster_cdr(in_stream, out_stream):
 
 
 def process_sample(samplepref, filename, outdir):
-	CDR_FILE = outdir + "/" + samplepref + "_cdr.fasta"
-	CDR_CLUST_FILE = outdir + "/" + samplepref + "_cdr.cl"
-	CDR_CORR_FILE = outdir + "/" + samplepref + "_cdr_corrected.cl"
-	READ_CORR_FILE = outdir + "/" + samplepref + "_corrected.fasta"
+	CDR_FILE = os.path.join(outdir, samplepref + "_cdr.fasta")
+	CDR_CLUST_FILE = os.path.join(outdir, samplepref + "_cdr.cl")
+	CDR_CORR_FILE = os.path.join(outdir, samplepref + "_cdr_corrected.cl")
+	READ_CORR_FILE = os.path.join(outdir, samplepref + "_corrected.fasta")
 
 	#extract cdr3 regions
 	CDR3_START = ["YYC"]
-	CDR3_END = ["WG[QKR]"] 	#for VH
+	CDR3_END = ["WG[QKR]"] 		#for VH
 	#CDR3_END = ["GT[KQ]"]		#for VK, VL
 	CDR_TRHLD = 15
 	find_cdr3(open(filename, "r"), CDR3_START, CDR3_END, 

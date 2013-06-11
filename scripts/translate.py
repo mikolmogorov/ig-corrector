@@ -4,7 +4,7 @@ from Bio.Seq import Seq
 import fasta_reader as fr
 import sys
 
-TRHLD = 1
+TRHLD = 3
 for h, seq in fr.read_fasta(open(sys.argv[1], "r")).iteritems():
 	mult = int(h.split("_")[2]) if len(h.split("_")) > 2 else 1
 	if mult >= TRHLD:
