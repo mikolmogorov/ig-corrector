@@ -4,6 +4,7 @@ import fasta_reader as fr
 import msa
 import sys
 import editdist
+import logging
 from Bio import pairwise2
 from itertools import product, combinations
 from collections import defaultdict
@@ -21,14 +22,12 @@ def merge_cdrs(cdr_map, weight, full_seqs, threshold):
 			if align[0][i] != align[1][i] and align[0][i] != "-" and align[1][i] != "-":
 				n_miss += 1
 
-		#sys.stderr.write(".")
 		if n_miss > 0:
 			if cdr1 not in cons_cache:
 				cons_cache[cdr1] = msa.get_consensus(cdr_map[cdr1], full_seqs)
 			if cdr2 not in cons_cache:
 				cons_cache[cdr2] = msa.get_consensus(cdr_map[cdr2], full_seqs)
 			dist = editdist.distance(cons_cache[cdr1], cons_cache[cdr2])
-			#sys.stderr.write(" " + str(dist) + " ")
 			if dist > 4:
 				continue
 		
@@ -39,9 +38,9 @@ def merge_cdrs(cdr_map, weight, full_seqs, threshold):
 		elif len(cdr2) % 3 == 0 and len(cdr1) % 3 != 0:
 			true_cdr, false_cdr = cdr2, cdr1
 		else:
-			sys.stderr.write("Ambigious cdrs! " + str(align) + "\n")
+			logging.getLogger(__name__).debug("Ambigious cdrs: {0} and {1}".format(cdr1, cdr2))
 			true_cdr, false_cdr = cdr1, cdr2
-		#print false_cdr, "to", true_cdr, weight[false_cdr], weight[true_cdr], len(cdr_map)
+		logging.getLogger(__name__).debug("{0} (as true) merged with {1}".format(cdr1, cdr2))
 
 		cdr_map[true_cdr].extend(cdr_map[false_cdr])
 		del cdr_map[false_cdr]
@@ -51,12 +50,11 @@ def merge_cdrs(cdr_map, weight, full_seqs, threshold):
 
 
 def correct_cluster(clust_seqs, full_seqs, threshold):
-	#cdr_map = {}
+	logging.getLogger(__name__).debug("Correcting cluster of size {0} with threshold {1}"
+												.format(len(clust_seqs), threshold))
 	cdr_map = defaultdict(list)
 	weight = {}
 	for seq_head, seq_cdr in clust_seqs.iteritems():
-		#if not seq_cdr in cdr_map:
-		#	cdr_map[seq_cdr] = []
 		cdr_map[seq_cdr].append(seq_head)
 		qty = int(seq_head.split("_")[1])
 		weight[seq_cdr] = weight.get(seq_cdr, 0) + qty
@@ -64,7 +62,10 @@ def correct_cluster(clust_seqs, full_seqs, threshold):
 	if len(cdr_map) == 1:
 		return {"Cluster" : clust_seqs}
 	
+	logging.getLogger(__name__).debug("Uniqe cdrs: {0}".format(len(cdr_map)))
 	merge_cdrs(cdr_map, weight, full_seqs, threshold)
+	logging.getLogger(__name__).debug("Uniqe cdrs after correction: {0}"
+													.format(len(cdr_map)))
 
 	clusters = {}
 	counter = 0
@@ -86,11 +87,15 @@ def out_cluster(name, clust_seqs, full_seqs, out_stream):
 def correct_cdr(cdr_stream, seqs_stream, threshold, out_stream):
 	full_seqs = fr.read_fasta(seqs_stream)
 	clusters = fr.read_cluster(cdr_stream)
+	logging.getLogger(__name__).info("Cdr correction started, {0} cdr clusters"
+														.format(len(clusters)))
 	cl_id = 0
 	for c_name, c_seqs in clusters.iteritems():
 		for newc_name, newc_seqs in correct_cluster(c_seqs, full_seqs, threshold).iteritems():
 			out_cluster("Cluster_{0}".format(cl_id), newc_seqs, full_seqs, out_stream)
 			cl_id += 1
+	logging.getLogger(__name__).info("Cdr correction finished, {0} cdr clusters"
+														.format(cl_id))
 
 
 def main():

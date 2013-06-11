@@ -3,6 +3,7 @@
 import fasta_reader as fr
 import sys
 import subprocess
+import logging
 from collections import namedtuple, defaultdict
 
 XALIGN_EXEC = "xalign"
@@ -10,6 +11,8 @@ XALIGN_EXEC = "xalign"
 AlignInfo = namedtuple("AlignInfo", ["begin", "end", "score"])
 
 def xalign(fasta_dict, query, threshold):
+	logging.getLogger(__name__).debug("Calling xalign with querry \"{0}\" and threshold {1}".
+																	format(query, threshold))
 	cmdline = [XALIGN_EXEC, "-t", str(threshold), "-q", query]
 	child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
 	fr.write_fasta(fasta_dict, child.stdin)
@@ -24,6 +27,7 @@ def xalign(fasta_dict, query, threshold):
 		for align in values[1:]:
 			start, end, score = align[1:-1].split(",")
 			out_dict[header[1:]].append(AlignInfo(int(start), int(end), int(score)))
+	logging.getLogger(__name__).debug("xalign finished")
 	return out_dict
 
 
@@ -31,16 +35,16 @@ def find_cdr3(in_stream, start_seqs, end_seqs, threshold, out_stream):
 	MIN_CDR_LEN = 30
 	MAX_CDR_LEN = 90
 
+	logging.getLogger(__name__).info("Finding cdr regions (size from {0} to {1}) started".
+														format(MIN_CDR_LEN, MAX_CDR_LEN))
 	seqs = fr.read_fasta(in_stream)
-	start_align = defaultdict(list) #{k : [] for k in seqs.keys()}
-	end_align = defaultdict(list) #{k : [] for k in seqs.keys()}
+	start_align = defaultdict(list)
+	end_align = defaultdict(list)
 	for qry in start_seqs:
 		for h, alns in xalign(seqs, qry, threshold).iteritems():
 			start_align[h].extend(alns)
-			#start_align[h] += alns
 	for qry in end_seqs:
 		for h, alns in xalign(seqs, qry, threshold).iteritems():
-			#end_align[h] += alns
 			end_align[h].extend(alns)
 
 	for h, seq in seqs.iteritems():
@@ -53,7 +57,7 @@ def find_cdr3(in_stream, start_seqs, end_seqs, threshold, out_stream):
 					candidates.append(AlignInfo(start.begin, end.begin - 1, start.score + end.score))
 
 		if len(candidates) == 0:
-			sys.stderr.write(">" + h +": cdr3 not found\n")
+			logging.getLogger(__name__).debug("{0} : no cdr found".format(h))
 			continue
 		
 		max_score = 0
@@ -65,7 +69,9 @@ def find_cdr3(in_stream, start_seqs, end_seqs, threshold, out_stream):
 
 		cdr = seq[cand.begin : cand.end + 1]
 		out_stream.write(">{0}\n{1}\n".format(h, cdr))
-		sys.stderr.write(">" + h + ": found with score " + str(max_score) + "\n")
+		logging.getLogger(__name__).debug("{0} : cdr found with score {1}".
+															format(h, max_score))
+	logging.getLogger(__name__).info("Finding cdr regions finished")
 
 
 def main():

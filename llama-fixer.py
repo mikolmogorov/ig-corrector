@@ -6,19 +6,30 @@ from scripts.correct_reads import correct_reads
 import sys
 import os
 import subprocess
+import logging
 
 BINARIES_PATH = "src"
 GRAPH_CLUST_EXEC = "graph_clust"
 
+CDR3_START = ["YYC"]
+CDR3_END = ["GT[KQ]"]		#for VK, VL
+#CDR3_END = ["WG[QKR]"] 	#for VH
+CDR_TRHLD = 15
+CDR_CORR_TRHLD = 2
+READ_CORR_TRHLD = 4
+
 def cluster_cdr(in_stream, out_stream):
 	TRHLD = 2
-	cmdline = [GRAPH_CLUST_EXEC, "-k", "11", "-m", str(TRHLD)]
+	K = 11
+	logging.info("graph_clust started with k = {0} and m = {1}".format(K, TRHLD))
+	cmdline = [GRAPH_CLUST_EXEC, "-k", str(K), "-m", str(TRHLD)]
 	child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
 	for line in in_stream:
 		child.stdin.write(line)
 	child.stdin.close()
 	for line in child.stdout:
 		out_stream.write(line)
+	logging.info("graph_clust finished")
 
 
 def process_sample(samplepref, filename, outdir):
@@ -26,25 +37,25 @@ def process_sample(samplepref, filename, outdir):
 	CDR_CLUST_FILE = os.path.join(outdir, samplepref + "_cdr.cl")
 	CDR_CORR_FILE = os.path.join(outdir, samplepref + "_cdr_corrected.cl")
 	READ_CORR_FILE = os.path.join(outdir, samplepref + "_corrected.fasta")
+	LOG_FILE = os.path.join(outdir, samplepref + "_log.txt")
+	
+	logging.basicConfig(level = logging.DEBUG, filename = LOG_FILE, filemode = "w")
+	console_log = logging.StreamHandler()
+	console_log.setLevel(logging.INFO)
+	logging.getLogger("").addHandler(console_log)
 
-	#extract cdr3 regions
-	CDR3_START = ["YYC"]
-	CDR3_END = ["WG[QKR]"] 		#for VH
-	#CDR3_END = ["GT[KQ]"]		#for VK, VL
-	CDR_TRHLD = 15
+	logging.info("Finding regions...")
 	find_cdr3(open(filename, "r"), CDR3_START, CDR3_END, 
 				CDR_TRHLD, open(CDR_FILE, "w"))
 
-	#cluster cdr3s
+	logging.info("Clustering extracted cdr`s...")
 	cluster_cdr(open(CDR_FILE, "r"), open(CDR_CLUST_FILE, "w"))
 
-	#correct cdr
-	CDR_CORR_TRHLD = 2
+	logging.info("Correcting cdrs...")
 	correct_cdr(open(CDR_CLUST_FILE, "r"), open(filename, "r"), 
 				CDR_CORR_TRHLD, open(CDR_CORR_FILE, "w"))
 
-	#correct reads
-	READ_CORR_TRHLD = 4
+	logging.info("Correcting reads...")
 	correct_reads(open(CDR_CORR_FILE, "r"), 
 					READ_CORR_TRHLD, open(READ_CORR_FILE, "w"))
 

@@ -1,19 +1,20 @@
 import subprocess
 import fasta_reader as fr
+import logging
 
 MUSCLE_PATH = "muscle"
 
 def align_muscle(headers, seqs):
 	fasta_dict = {h: seqs[h] for h in headers}
+	logging.getLogger(__name__).debug("Running muscle for {0} seqs"
+												.format(len(fasta_dict)))
 
 	cmdline = [MUSCLE_PATH, "-diags", "-maxiters", "2", "-quiet"]
 	child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
 	fr.write_fasta(fasta_dict, child.stdin)
-	#fr.write_fasta(fasta_dict, open("dump-muscle.fasta", "w"))
 	child.stdin.close()
-		#for line in child.stderr:
-	#	sys.stderr.write(line)
 	out_dict = fr.read_fasta(child.stdout)
+	logging.getLogger(__name__).debug("Muscle finished")
 	return out_dict
 
 
