@@ -7,6 +7,7 @@ import sys
 import os
 import subprocess
 import logging
+import threading
 
 BINARIES_PATH = "src"
 GRAPH_CLUST_EXEC = "graph_clust"
@@ -17,6 +18,31 @@ CDR3_END = ["GT[KQ]"]       #for VK, VL
 CDR_TRHLD = 15
 CDR_CORR_TRHLD = 2
 READ_CORR_TRHLD = 4
+
+
+class LogDistributorHandler(logging.Handler):
+    def __init__(self):
+        super(LogDistributorHandler, self).__init__()
+        self.file_handlers = {}
+
+    def addFileHandler(self, name, file):
+        self.file_handlers[name] = file
+
+    def handle(self, record):
+        if record.threadName in self.file_handlers:
+            self.file_handlers[record.threadName].emit(record)
+
+
+class SampleThread(threading.Thread):
+    def __init__(self, name, input_file, out_dir):
+        super(SampleThread, self).__init__()
+        self.name = name
+        self.input_file = input_file
+        self.out_dir = out_dir
+
+    def run(self):
+        process_sample(self.name, self.input_file, self.out_dir)
+
 
 def cluster_cdr(in_stream, out_stream):
     TRHLD = 2
@@ -37,12 +63,6 @@ def process_sample(samplepref, filename, outdir):
     CDR_CLUST_FILE = os.path.join(outdir, samplepref + "_cdr.cl")
     CDR_CORR_FILE = os.path.join(outdir, samplepref + "_cdr_corrected.cl")
     READ_CORR_FILE = os.path.join(outdir, samplepref + "_corrected.fasta")
-    LOG_FILE = os.path.join(outdir, samplepref + "_log.txt")
-
-    logging.basicConfig(level = logging.DEBUG, filename = LOG_FILE, filemode = "w")
-    console_log = logging.StreamHandler()
-    console_log.setLevel(logging.INFO)
-    logging.getLogger("").addHandler(console_log)
 
     logging.info("Finding regions...")
     find_cdr3(open(filename, "r"), CDR3_START, CDR3_END,
@@ -66,7 +86,26 @@ def main():
         print "USAGE: llama-fixer.py sample_name sample_fasta out_dir"
         return
 
-    process_sample(sys.argv[1], sys.argv[2], sys.argv[3])
+    sample_name = sys.argv[1]
+    input_file = sys.argv[2]
+    out_dir = sys.argv[3]
+
+    log_file = os.path.join(out_dir, sample_name + "_log.txt")
+
+    logging.getLogger().setLevel(logging.DEBUG)
+
+    console_log = logging.StreamHandler()
+    console_log.setLevel(logging.INFO)
+
+    file_distr = LogDistributorHandler()
+    file_distr.setLevel(logging.DEBUG)
+    file_distr.addFileHandler(sample_name, logging.FileHandler(log_file))
+
+    logging.getLogger().addHandler(console_log)
+    logging.getLogger().addHandler(file_distr)
+
+    thread = SampleThread(sample_name, input_file, out_dir)
+    thread.start()
 
 
 if __name__ == "__main__":

@@ -46,7 +46,11 @@ def merge_cdrs(cdr_map, weight, full_seqs, threshold):
         del cdr_map[false_cdr]
         weight[true_cdr] += weight[false_cdr]
         del weight[false_cdr]
-        cons_cache[true_cdr] = msa.get_consensus(cdr_map[true_cdr], full_seqs)
+        #cons_cache[true_cdr] = msa.get_consensus(cdr_map[true_cdr], full_seqs)
+        if true_cdr in cons_cache:
+            del cons_cache[true_cdr]
+        if false_cdr in cons_cache:
+            del cons_cache[false_cdr]
 
 
 def correct_cluster(clust_seqs, full_seqs, threshold):
