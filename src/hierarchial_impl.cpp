@@ -21,9 +21,10 @@ namespace
 	}
 }
 
-void HierarchialClust::cluster(const FastaSequences& seqs, FastaSet& output, float cutoff)
+void HierarchialClust::cluster(const FastaSequences& seqs, FastaSet& output, float cutoff, bool writeLog)
 {
 	_cutoff = cutoff;
+	_writeLog = writeLog;
 
 	int counter = 0;
 	for (auto seq : seqs)
@@ -58,7 +59,10 @@ bool HierarchialClust::step()
 	KeyPair minKey = std::min_element(_distances.begin(), _distances.end(), compare)->first;
 	if (_distances[minKey] > _cutoff) return false;
 
-	std::cerr << "merging " << minKey.first << " " << minKey.second << " " << _distances[minKey] << std::endl;
+	if (_writeLog)
+	{
+		std::cerr << "merging " << minKey.first << " " << minKey.second << " " << _distances[minKey] << std::endl;
+	}
 	//merge two clusters
 	auto itList = _clusters.find(minKey.first);
 	itList->second.splice(itList->second.end(), _clusters[minKey.second]);

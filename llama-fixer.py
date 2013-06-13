@@ -40,7 +40,7 @@ class SampleThread(threading.Thread):
         process_sample(self.name, *self.args)
 
 
-class Watcher():
+class InterruptWatcher():
     def __init__(self):
         self.child = os.fork()
         if self.child == 0:
@@ -65,7 +65,7 @@ class Watcher():
 def cluster_cdr(in_stream, out_stream, threshold):
     K = 11
     logging.info("graph_clust started with k = {0} and m = {1}".format(K, threshold))
-    cmdline = [GRAPH_CLUST_EXEC, "-k", str(K), "-m", str(threshold)]
+    cmdline = [GRAPH_CLUST_EXEC, "-k", str(K), "-m", str(threshold), "-q"]
     child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
     for line in in_stream:
         child.stdin.write(line)
@@ -108,7 +108,7 @@ def run_jobs(config_name, out_dir, reads_file, log_distr):
     log_formatter = logging.Formatter("[%(asctime)s] %(name)s: %(levelname)s: %(message)s",
                                                                 "%H:%M:%S")
 
-    #split(config_name, reads_file, out_dir)
+    split(config_name, reads_file, out_dir)
     config = json.load(open(config_name, "r"))
     for sample in config:
         name = sample[u"sampleName"].encode("ascii")
@@ -158,7 +158,7 @@ def main():
     logging.getLogger().addHandler(console_log)
     logging.getLogger().addHandler(file_distr)
 
-    Watcher()
+    InterruptWatcher()
 
     run_jobs(config_file, out_dir, reads_file, file_distr)
 

@@ -7,7 +7,7 @@
 #include "disjoint_set.h"
 #include "edit_distance.h"
 
-void Clusterisator::doJob(FastaSequences& seqs, FastaSet& output, int kmerSize, int nMissmatches)
+void Clusterisator::doJob(FastaSequences& seqs, FastaSet& output, int kmerSize, int nMissmatches, bool writeLog)
 {
 	_fastaHash.clear();
 	_kmerHash.clear();
@@ -15,6 +15,7 @@ void Clusterisator::doJob(FastaSequences& seqs, FastaSet& output, int kmerSize, 
 	_seqEnum.clear();
 	_kmerSize = kmerSize;
 	_nMissmatches = nMissmatches;
+	_writeLog = writeLog;
 
 	this->makeFastaHash(seqs, _fastaHash, _seqEnum);
 	for (auto &itHash : _fastaHash)
@@ -110,7 +111,7 @@ void Clusterisator::clusterSeqs(KmerHash& kmerHash, FastaHash& fastaHash,
 
 			++count;
 			int percent = float(count) / nSeqs * 100;
-			if (percent > old_precent)
+			if (_writeLog && percent > old_precent)
 			{
 				std::cerr << percent << " ";
 				old_precent = percent;
@@ -118,7 +119,7 @@ void Clusterisator::clusterSeqs(KmerHash& kmerHash, FastaHash& fastaHash,
 			}
 		}
 	}
-	std::cerr << std::endl;
+	if (_writeLog) std::cerr << std::endl;
 }
 
 void Clusterisator::makeFastaHash(FastaSequences& seqs, FastaHash& hash, IdToHeader& seqsEnum)

@@ -76,10 +76,14 @@ def split(config_name, reads_file, out_dir):
         files[name] = open(os.path.join(sample_dir, name + ".fasta"), "w")
         incomplete[name] = open(os.path.join(sample_dir, name + "_incomplete.fasta"), "w")
 
-    processed = 0
-    for header, seq, _ in fr._fastq_source(open(reads_file, "r")):
-        print processed
-        processed += 1
+    old_percent = -1
+    file_size = os.path.getsize(reads_file)
+    file = open(reads_file, "r")
+    for header, seq, _ in fr._fastq_source(file):
+        perc = 10 * file.tell() / file_size
+        if perc != old_percent:
+            old_percent = perc
+            sys.stderr.write(str(perc) + " ")
 
         stripped = seq.strip("acgtn")
         if "N" in stripped:
@@ -106,6 +110,7 @@ def split(config_name, reads_file, out_dir):
             fr.write_fasta({header : seq}, filtered)
 
     logging.getLogger(__name__).info("Splitting finished")
+    sys.stderr.write("\n")
 
 
 def main():

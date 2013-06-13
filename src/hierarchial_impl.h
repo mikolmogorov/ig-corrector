@@ -10,7 +10,7 @@
 class HierarchialClust
 {
 public:
-	void cluster(const FastaSequences& seqs, FastaSet& output, float cutoff);
+	void cluster(const FastaSequences& seqs, FastaSet& output, float cutoff, bool writeLog);
 	
 private:
 	typedef std::pair<int, int> KeyPair;
@@ -28,6 +28,7 @@ private:
 	Clusters _clusters;
 	FastaHash _fastaHash; 
 	float _cutoff;
+	bool _writeLog;
 };
 
 

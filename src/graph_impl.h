@@ -15,7 +15,7 @@ class Clusterisator
 {
 public:
 	Clusterisator() {}
-	void doJob (FastaSequences& seqs, FastaSet& output, int kmerSize, int nMissmatches);
+	void doJob (FastaSequences& seqs, FastaSet& output, int kmerSize, int nMissmatches, bool writeLog);
 
 private:
 	typedef std::unordered_map<int, std::string> FastaHash;
@@ -32,6 +32,7 @@ private:
 
 	int _nMissmatches;
 	int _kmerSize;
+	bool _writeLog;
 	
 	FastaHash _fastaHash;
 	KmerHash _kmerHash;

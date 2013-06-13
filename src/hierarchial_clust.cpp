@@ -9,8 +9,8 @@ bool parseArgs(int argc, char** argv, float& cutoff, bool& quiet, std::string& f
 
 int main(int argc, char* argv[])
 {
-	float cutoff;
-	bool quiet;
+	float cutoff = 0.0f;
+	bool quiet = false;
 	std::string fileName;
 	if (!parseArgs(argc, argv, cutoff, quiet, fileName))
 	{
@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 
 	FastaSet clusters;
 	HierarchialClust clusterizator;
-	clusterizator.cluster(seqs, clusters, 4.0f);
+	clusterizator.cluster(seqs, clusters, 4.0f, !quiet);
 	writeFastaSet(clusters, std::cout);
 
 	return 0;

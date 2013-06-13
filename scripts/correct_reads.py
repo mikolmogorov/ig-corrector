@@ -15,7 +15,7 @@ def run_graph(cluster_seqs, threshlod):
     K = 21
     logging.getLogger(__name__).debug("graph_clust started with k = {0} and m = {1}"
                                                             .format(K, threshlod))
-    cmdline = [GRAPH_EXEC, "-k", str(K), "-m", str(threshlod)]
+    cmdline = [GRAPH_EXEC, "-k", str(K), "-m", str(threshlod), "-q"]
     child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
     fr.write_fasta(cluster_seqs, child.stdin)
     child.stdin.close()
