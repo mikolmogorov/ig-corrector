@@ -14,6 +14,21 @@ def _fasta_source(stream):
         yield header, seq
 
 
+def _fastq_source(stream):
+    seq = ""
+    header = ""
+    state = 0
+    for line in stream:
+        l = line.strip("\n")
+        if state == 0:
+            header = l[1:]
+        elif state == 1:
+            seq = l
+        elif state == 3:
+            yield header, seq, line
+        state = (state + 1) % 4
+
+
 def read_fasta(stream):
     seqs = {}
     for h, seq in _fasta_source(stream):

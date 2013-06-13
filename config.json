@@ -1,0 +1,35 @@
+[
+	{
+		"sampleName" : "VH",
+		"forwardMid" : "ATAGATAGAC", 
+		"reverseMid" : "ATATAGTCGC",
+        "forwardPrimer" : "GCCTACGGCAGCCGCTGGATTGTTATTAC",
+        "reversePrimer" : "CACAGACGGGCCTTTTGTAGAC",
+		"cdr3Start" : ["YYC"],
+		"cdr3End" : ["WG[KQR]"],
+		"cdr3Threshold" : 2,
+		"sequenceThreshold" : 4 
+	},
+	{
+		"sampleName" : "VL",
+		"forwardMid" : "ATCTACTGAC", 
+		"reverseMid" : "CACGTAGATC",
+		"forwardPrimer" : "GCTGCTGCTGGTCTGCTGCTCCTCGCTG", 
+		"reversePrimer" : "GGCGGGAAAATAAAAACAGACGG",
+		"cdr3Start" : ["YYC"],
+		"cdr3End" : ["GT[KQ]"],
+		"cdr3Threshold" : 2,
+		"sequenceThreshold" : 4 
+	},
+	{
+		"sampleName" : "VK",
+		"forwardMid" : "CACGTGTCGC",
+		"reverseMid" : "CATACTCTAC",
+		"forwardPrimer" : "GCTGCTGCTGGTCTGCTGCTCCTCGCTG",
+		"reversePrimer" : "GGCGGGAAAATAAAAACAGACGG",
+		"cdr3Start" : ["YYC"],
+		"cdr3End" : ["GT[KQ]"],
+		"cdr3Threshold" : 2,
+		"sequenceThreshold" : 4 
+	}
+]
