@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 import fasta_reader as fr
 import msa
@@ -96,8 +96,8 @@ def correct_cluster(clust_seqs, full_seqs, threshold):
     weight = {}
     for seq_head, seq_cdr in clust_seqs.iteritems():
         cdr_map[seq_cdr].append(seq_head)
-        qty = int(seq_head.split("_")[1])
-        weight[seq_cdr] = weight.get(seq_cdr, 0) + qty
+        _, qty = seq_head.split("_")
+        weight[seq_cdr] = weight.get(seq_cdr, 0) + int(qty)
 
     if len(cdr_map) == 1:
         return {"Cluster" : clust_seqs}

@@ -33,12 +33,13 @@ def xalign(fasta_dict, query):
     out_dict = {}
     for line in child.stdout:
         values = line.strip().split(" ")
-        header = values[0]
-        assert header.startswith(">")
-        out_dict[header[1:]] = []
-        for align in values[1:]:
+        header = values[0][1:]
+        aligns = values[1:]
+        #assert header.startswith(">")
+        out_dict[header] = []
+        for align in aligns:
             start, end, score = align[1:-1].split(",")
-            out_dict[header[1:]].append(AlignInfo(int(start), int(end), int(score)))
+            out_dict[header].append(AlignInfo(int(start), int(end), int(score)))
     logger.debug("xalign finished")
     return out_dict
 
@@ -47,7 +48,7 @@ def find_cdr3(in_stream, start_seqs, end_seqs, out_stream):
     MIN_CDR_LEN = 30
     MAX_CDR_LEN = 90
 
-    logger.info("Finding cdr regions (size from {0} to {1}) started".
+    logger.info("Finding cdr regions started".
                                                         format(MIN_CDR_LEN, MAX_CDR_LEN))
     seqs = fr.read_fasta(in_stream)
     start_align = defaultdict(list)

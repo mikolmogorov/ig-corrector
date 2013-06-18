@@ -81,7 +81,8 @@ def get_consensus(seqs, seq_id):
     real_seqs = 0
     for s in seqs:
         header = s.split(" ")[0]
-        real_seqs += int(header.split("_")[1])
+        _, qty = header.split("_")
+        real_seqs += int(qty)
 
     #naive kmer correction for 2-sequence consensus
     if real_seqs > 2:

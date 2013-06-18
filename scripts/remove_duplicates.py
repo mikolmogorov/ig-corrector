@@ -4,10 +4,11 @@ import fasta_reader as fr
 import sys
 import logging
 
+logger = logging.getLogger(__name__)
+
 def remove_dups(stream_in, stream_out):
     seqs = fr.read_fasta(stream_in)
-    logging.getLogger(__name__).info("Removing duplicates from {0} sequences"
-                                                        .format(len(seqs)))
+    logger.info("Removing duplicates from {0} sequences".format(len(seqs)))
     counter = 0
     new_seqs = {}
     seq_count = {}
@@ -17,7 +18,7 @@ def remove_dups(stream_in, stream_out):
         new_seqs["Seq{0}_{1}".format(counter, seq_count[s])] = s
         counter += 1
     fr.write_fasta(new_seqs, stream_out)
-    logging.getLogger(__name__).info("Done, {0} sequences left".format(len(new_seqs)))
+    logger.info("Done, {0} sequences left".format(len(new_seqs)))
 
 def main():
     if len(sys.argv) < 2:

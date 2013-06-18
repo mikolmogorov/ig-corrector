@@ -3,18 +3,18 @@ import fasta_reader as fr
 import logging
 
 MUSCLE_PATH = "muscle"
+logger = logging.getLogger(__name__)
 
 def align_muscle(headers, seqs):
     fasta_dict = {h: seqs[h] for h in headers}
-    logging.getLogger(__name__).debug("Running muscle for {0} seqs"
-                                                .format(len(fasta_dict)))
+    logger.debug("Running muscle for {0} seqs".format(len(fasta_dict)))
 
     cmdline = [MUSCLE_PATH, "-diags", "-maxiters", "2", "-quiet"]
     child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
     fr.write_fasta(fasta_dict, child.stdin)
     child.stdin.close()
     out_dict = fr.read_fasta(child.stdout)
-    logging.getLogger(__name__).debug("Muscle finished")
+    logger.debug("Muscle finished")
     return out_dict
 
 

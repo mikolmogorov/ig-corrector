@@ -16,8 +16,9 @@ import argparse
 
 BINARIES_PATH = "src"
 GRAPH_CLUST_EXEC = "graph_clust"
-LOG_FORMATTER = logging.Formatter("[%(asctime)s] %(name)s: %(levelname)s: %(message)s",
+log_formatter = logging.Formatter("[%(asctime)s] %(name)s: %(levelname)s: %(message)s",
                                                                 "%H:%M:%S")
+logger = logging.getLogger()
 
 class LogDistributorHandler(logging.Handler):
     def __init__(self):
@@ -66,7 +67,7 @@ class InterruptWatcher:
 
 def cluster_cdr(in_stream, out_stream, threshold):
     K = 11
-    logging.info("graph_clust started with k = {0} and m = {1}".format(K, threshold))
+    logger.info("graph_clust started with k = {0} and m = {1}".format(K, threshold))
     cmdline = [GRAPH_CLUST_EXEC, "-k", str(K), "-m", str(threshold), "-q"]
     child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
     for line in in_stream:
@@ -74,7 +75,7 @@ def cluster_cdr(in_stream, out_stream, threshold):
     child.stdin.close()
     for line in child.stdout:
         out_stream.write(line)
-    logging.info("graph_clust finished")
+    logger.info("graph_clust finished")
 
 
 def process_sample(samplepref, filename, outdir, cdr_start,
@@ -85,23 +86,23 @@ def process_sample(samplepref, filename, outdir, cdr_start,
     CDR_CORR_FILE = os.path.join(outdir, samplepref + "_cdr_corrected.cl")
     READ_CORR_FILE = os.path.join(outdir, samplepref + "_corrected.fasta")
 
-    logging.info("Removing duplicate sequqnces...")
+    logger.info("Removing duplicate sequqnces...")
     remove_dups(open(filename, "r"), open(UNIQUE_FILE, "w"))
 
-    logging.info("Finding regions...")
+    logger.info("Finding regions...")
     find_cdr3(open(UNIQUE_FILE, "r"), cdr_start, cdr_end, open(CDR_FILE, "w"))
 
-    logging.info("Clustering extracted cdr`s...")
+    logger.info("Clustering extracted cdr`s...")
     cluster_cdr(open(CDR_FILE, "r"), open(CDR_CLUST_FILE, "w"), cdr_threshold)
 
-    logging.info("Correcting cdrs...")
+    logger.info("Correcting cdrs...")
     correct_cdr(open(CDR_CLUST_FILE, "r"), open(UNIQUE_FILE, "r"),
                 cdr_threshold, open(CDR_CORR_FILE, "w"))
 
-    logging.info("Correcting reads...")
+    logger.info("Correcting reads...")
     correct_reads(open(CDR_CORR_FILE, "r"),
                     seq_threshold, open(READ_CORR_FILE, "w"))
-    logging.info("Finished!")
+    logger.info("Finished!")
 
 
 def run_jobs(config_name, out_dir, reads_file, log_distr, is_fastq):
@@ -123,7 +124,7 @@ def run_jobs(config_name, out_dir, reads_file, log_distr, is_fastq):
 
         log_file = os.path.join(sample_dir, name + "_log.txt")
         file_handler = logging.FileHandler(log_file, mode = "w")
-        file_handler.setFormatter(LOG_FORMATTER)
+        file_handler.setFormatter(log_formatter)
         log_distr.addFileHandler(name, file_handler)
 
         thread = SampleThread(name, sample_input, sample_dir, cdr3_start,
@@ -154,7 +155,7 @@ def main():
                                                                             "%H:%M:%S")
     common_file = os.path.join(out_dir, "main.log")
     common_handler = logging.FileHandler(common_file, mode = "w")
-    common_handler.setFormatter(LOG_FORMATTER)
+    common_handler.setFormatter(log_formatter)
 
     console_log = logging.StreamHandler()
     console_log.setLevel(logging.INFO)
