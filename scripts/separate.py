@@ -6,11 +6,12 @@ import logging
 import os
 import fasta_reader as fr
 from Bio.Seq import Seq
-from Bio import pairwise2
+from Bio import pairwise2, SeqIO
 from collections import namedtuple
 
 
 PrimerPair = namedtuple("PrimerPair", ["forward", "reverse"])
+logger = logging.getLogger(__name__)
 
 
 class AlignRes:
@@ -62,8 +63,17 @@ def with_sequence(mid_pair, primer_pair, seq):
     return None, AlignRes.nomid
 
 
-def split(config_name, reads_file, out_dir):
-    logging.getLogger(__name__).info("Splitting {0} started".format(reads_file))
+def get_seqs(filename, is_fastq):
+    file = open(filename, "r")
+    if is_fastq:
+        records = SeqIO.parse(file, "fastq")
+    else:
+        records = SeqIO.parse(file, "fasta")
+    return {rec.id : str(rec.seq) for rec in records}
+
+
+def split(config_name, reads_file, out_dir, is_fastq):
+    logger.info("Splitting {0} started".format(reads_file))
     config = json.load(open(config_name, "r"))
     mids = {}
     primers = {}
@@ -85,18 +95,20 @@ def split(config_name, reads_file, out_dir):
         files[name] = open(os.path.join(sample_dir, name + ".fasta"), "w")
         incomplete[name] = open(os.path.join(sample_dir, name + "_incomplete.fasta"), "w")
 
+    reads = get_seqs(reads_file, is_fastq)
     old_percent = -1
-    file_size = os.path.getsize(reads_file)
-    file = open(reads_file, "r")
-    for header, seq, _ in fr._fastq_source(file):
-        perc = 10 * file.tell() / file_size
+    counter = 0
+
+    for header, seq in reads.iteritems():
+        counter += 1
+        perc = 10 * counter / len(reads)
         if perc != old_percent:
             old_percent = perc
             sys.stderr.write(str(perc) + " ")
 
         stripped = seq.strip("acgtn")
         if "N" in stripped:
-            logging.getLogger(__name__).debug("{0}: contains N`s".format(header))
+            logger.debug("{0}: contains N`s".format(header))
             fr.write_fasta({header : seq}, filtered)
             continue
 
@@ -104,27 +116,27 @@ def split(config_name, reads_file, out_dir):
         for sample in mids.keys():
             res_seq, res = with_sequence(mids[sample], primers[sample], stripped)
             if res == AlignRes.ok:
-                logging.getLogger(__name__).debug("{0}: is {1}".format(header, sample))
+                logger.debug("{0}: is {1}".format(header, sample))
                 fr.write_fasta({header : res_seq}, files[sample])
                 match_count += 1
                 break
             elif res == AlignRes.incomplete:
-                logging.getLogger(__name__).debug("{0}: is incomplete {1}".format(header, sample))
+                logger.debug("{0}: is incomplete {1}".format(header, sample))
                 fr.write_fasta({header : stripped}, incomplete[sample])
                 match_count += 1
                 break
 
         if match_count == 0:
-            logging.getLogger(__name__).debug("{0}: no mid found".format(header))
+            logger.debug("{0}: no mid found".format(header))
             fr.write_fasta({header : seq}, filtered)
 
     sys.stderr.write("\n")
-    logging.getLogger(__name__).info("Splitting finished")
+    logger.info("Splitting finished")
 
 
 def main():
     #logging.basicConfig(level = logging.DEBUG)
-    split(sys.argv[1], sys.argv[2], sys.argv[3])
+    split(sys.argv[1], sys.argv[2], sys.argv[3], True)
 
 
 if __name__ == "__main__":

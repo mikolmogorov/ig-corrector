@@ -11,6 +11,7 @@ import subprocess
 import logging
 import threading
 import json
+import argparse
 
 
 BINARIES_PATH = "src"
@@ -103,9 +104,9 @@ def process_sample(samplepref, filename, outdir, cdr_start,
     logging.info("Finished!")
 
 
-def run_jobs(config_name, out_dir, reads_file, log_distr):
+def run_jobs(config_name, out_dir, reads_file, log_distr, is_fastq):
 
-    split(config_name, reads_file, out_dir)
+    split(config_name, reads_file, out_dir, is_fastq)
     config = json.load(open(config_name, "r"))
     for sample in config:
         name = sample[u"sampleName"].encode("ascii")
@@ -131,15 +132,22 @@ def run_jobs(config_name, out_dir, reads_file, log_distr):
 
 
 def main():
-    if len(sys.argv) < 4:
-        print "USAGE: llama-fixer.py config_file reads_file out_dir"
-        return
-
     os.environ["PATH"] += os.pathsep + BINARIES_PATH
 
-    config_file = sys.argv[1]
-    reads_file = sys.argv[2]
-    out_dir = sys.argv[3]
+    parser = argparse.ArgumentParser(description = "454 immunoglobulines read corrector")
+    parser.add_argument("reads_file", action = "store", help = "Input file with reads")
+    parser.add_argument("-q", action = "store_const", metavar = "fastq", dest = "fastq",
+                        default = False, const  = True, help = "Use fastq instead of fasta")
+    parser.add_argument("-o", action = "store", metavar = "out_dir", dest = "out_dir",
+                        required = True, help = "Output directory")
+    parser.add_argument("-c", action = "store", metavar = "config", dest = "config",
+                        default = "config.json", help = "Config file (default: config.json)")
+    args = parser.parse_args()
+
+    config_file = args.config
+    reads_file = args.reads_file
+    out_dir = args.out_dir
+    is_fastq = args.fastq
 
     logging.getLogger().setLevel(logging.DEBUG)
     console_formatter = logging.Formatter("[%(asctime)s] %(threadName)s: %(message)s",
@@ -161,7 +169,7 @@ def main():
 
     InterruptWatcher()
 
-    run_jobs(config_file, out_dir, reads_file, file_distr)
+    run_jobs(config_file, out_dir, reads_file, file_distr, is_fastq)
 
 
 if __name__ == "__main__":

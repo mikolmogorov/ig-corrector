@@ -36,6 +36,13 @@ def read_fasta(stream):
     return seqs
 
 
+def read_fastq(stream):
+    seqs = {}
+    for h, seq, _ in _fastq_source(stream):
+        seqs[h] = seq
+    return seqs
+
+
 def write_fasta(fasta_dict, stream):
     for h in fasta_dict:
         stream.write(">{0}\n{1}\n".format(h, fasta_dict[h]))
