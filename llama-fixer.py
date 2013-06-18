@@ -15,7 +15,8 @@ import json
 
 BINARIES_PATH = "src"
 GRAPH_CLUST_EXEC = "graph_clust"
-
+LOG_FORMATTER = logging.Formatter("[%(asctime)s] %(name)s: %(levelname)s: %(message)s",
+                                                                "%H:%M:%S")
 
 class LogDistributorHandler(logging.Handler):
     def __init__(self):
@@ -40,7 +41,7 @@ class SampleThread(threading.Thread):
         process_sample(self.name, *self.args)
 
 
-class InterruptWatcher():
+class InterruptWatcher:
     def __init__(self):
         self.child = os.fork()
         if self.child == 0:
@@ -95,7 +96,7 @@ def process_sample(samplepref, filename, outdir, cdr_start,
     cluster_cdr(open(CDR_FILE, "r"), open(CDR_CLUST_FILE, "w"), cdr_threshold)
 
     logging.info("Correcting cdrs...")
-    correct_cdr(open(CDR_CLUST_FILE, "r"), open(filename, "r"),
+    correct_cdr(open(CDR_CLUST_FILE, "r"), open(UNIQUE_FILE, "r"),
                 cdr_threshold, open(CDR_CORR_FILE, "w"))
 
     logging.info("Correcting reads...")
@@ -105,8 +106,6 @@ def process_sample(samplepref, filename, outdir, cdr_start,
 
 
 def run_jobs(config_name, out_dir, reads_file, log_distr):
-    log_formatter = logging.Formatter("[%(asctime)s] %(name)s: %(levelname)s: %(message)s",
-                                                                "%H:%M:%S")
 
     split(config_name, reads_file, out_dir)
     config = json.load(open(config_name, "r"))
@@ -125,7 +124,7 @@ def run_jobs(config_name, out_dir, reads_file, log_distr):
 
         log_file = os.path.join(sample_dir, name + "_log.txt")
         file_handler = logging.FileHandler(log_file, mode = "w")
-        file_handler.setFormatter(log_formatter)
+        file_handler.setFormatter(LOG_FORMATTER)
         log_distr.addFileHandler(name, file_handler)
 
         thread = SampleThread(name, sample_input, sample_dir, cdr3_start,
@@ -147,6 +146,9 @@ def main():
     logging.getLogger().setLevel(logging.DEBUG)
     console_formatter = logging.Formatter("[%(asctime)s] %(threadName)s: %(message)s",
                                                                             "%H:%M:%S")
+    common_file = os.path.join(out_dir, "main.log")
+    common_handler = logging.FileHandler(common_file, mode = "w")
+    common_handler.setFormatter(LOG_FORMATTER)
 
     console_log = logging.StreamHandler()
     console_log.setLevel(logging.INFO)
@@ -154,6 +156,7 @@ def main():
 
     file_distr = LogDistributorHandler()
     file_distr.setLevel(logging.DEBUG)
+    file_distr.addFileHandler("MainThread", common_handler)
 
     logging.getLogger().addHandler(console_log)
     logging.getLogger().addHandler(file_distr)

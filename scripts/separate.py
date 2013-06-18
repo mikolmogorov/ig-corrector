@@ -19,6 +19,16 @@ class AlignRes:
     nomid = 2
 
 
+def local_alignment(seq1, seq2):
+    MISSMATCH = -1
+    GAP_OPEN = -1
+    GAP_EXT = -1
+    MATCH = 1
+    align = pairwise2.align.localms(seq1, seq2, MATCH, MISSMATCH, GAP_OPEN, GAP_EXT,
+                                    one_alignment_only = True)[0]
+    return align[0:3]
+
+
 def with_sequence(mid_pair, primer_pair, seq):
     FWD_MISSMATCH = 6
     REV_MISSMATCH = 10
@@ -30,19 +40,18 @@ def with_sequence(mid_pair, primer_pair, seq):
         end_flank = 4 * (len(mid_pair[op_dir]) + len(primer_pair[op_dir]))
 
         start_seq = mid_pair[f_dir] + primer_pair[f_dir]
-        start_aln = pairwise2.align.localms(seq[0 : start_flank], start_seq,
-                                            1, -1, -1, -1, one_alignment_only = 1)[0]
-        if start_aln[2] < len(start_seq) - FWD_MISSMATCH:
+        start_aln_a, start_aln_b, start_aln_score = local_alignment(seq[0 : start_flank], start_seq)
+        if start_aln_score < len(start_seq) - FWD_MISSMATCH:
             continue
 
         end_seq = mid_pair[op_dir] + primer_pair[op_dir]
-        end_aln = pairwise2.align.localms(rev_seq[0 : end_flank], end_seq, 1, -1, -1, -1,
-                                            one_alignment_only = 1)[0]
-        if end_aln[2] < len(end_seq) - REV_MISSMATCH:
+        end_aln_a, end_aln_b, end_aln_score = local_alignment(rev_seq[0 : end_flank], end_seq)
+
+        if end_aln_score < len(end_seq) - REV_MISSMATCH:
             return None, AlignRes.incomplete
 
-        start = len(start_aln[1].rstrip("-"))
-        end = len(end_aln[1].rstrip("-"))
+        start = len(start_aln_b.rstrip("-"))
+        end = len(end_aln_b.rstrip("-"))
 
         res = seq[start : -end]
         if f_dir == 0:
@@ -109,8 +118,8 @@ def split(config_name, reads_file, out_dir):
             logging.getLogger(__name__).debug("{0}: no mid found".format(header))
             fr.write_fasta({header : seq}, filtered)
 
-    logging.getLogger(__name__).info("Splitting finished")
     sys.stderr.write("\n")
+    logging.getLogger(__name__).info("Splitting finished")
 
 
 def main():
