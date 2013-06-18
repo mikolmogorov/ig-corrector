@@ -77,20 +77,18 @@ def cluster_cdr(in_stream, out_stream, threshold):
 
 
 def process_sample(samplepref, filename, outdir, cdr_start,
-                    cdr_end, cdr_threshold, seq_threshold):
+                                cdr_end, cdr_threshold, seq_threshold):
     UNIQUE_FILE = os.path.join(outdir, samplepref + "_unique.fasta")
     CDR_FILE = os.path.join(outdir, samplepref + "_cdr.fasta")
     CDR_CLUST_FILE = os.path.join(outdir, samplepref + "_cdr.cl")
     CDR_CORR_FILE = os.path.join(outdir, samplepref + "_cdr_corrected.cl")
     READ_CORR_FILE = os.path.join(outdir, samplepref + "_corrected.fasta")
-    CDR_TRHLD = 15
 
     logging.info("Removing duplicate sequqnces...")
     remove_dups(open(filename, "r"), open(UNIQUE_FILE, "w"))
 
     logging.info("Finding regions...")
-    find_cdr3(open(UNIQUE_FILE, "r"), cdr_start, cdr_end,
-                CDR_TRHLD, open(CDR_FILE, "w"))
+    find_cdr3(open(UNIQUE_FILE, "r"), cdr_start, cdr_end, open(CDR_FILE, "w"))
 
     logging.info("Clustering extracted cdr`s...")
     cluster_cdr(open(CDR_FILE, "r"), open(CDR_CLUST_FILE, "w"), cdr_threshold)
