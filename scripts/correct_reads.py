@@ -26,6 +26,15 @@ class KmerCache:
     def check(self, kmer):
         return kmer in self.cache
 
+    def count_trusted(self, sequence):
+        counter = 0
+        for i in xrange(len(sequence) - self.k + 1):
+            #print sequence[i : i + self.k]
+            if sequence[i : i + self.k] in self.cache:
+                counter += 1
+        return counter
+
+
 kmer_cache = KmerCache(11)
 
 
@@ -66,15 +75,31 @@ def split_cluster(cluster_seqs, threshlod):
 
 
 def get_consensus(seqs, seq_id):
+    if len(seqs) == 1:
+        return "Seq_{0}_1".format(seq_id), seqs.values()[0]
+
     real_seqs = 0
     for s in seqs:
         header = s.split(" ")[0]
         real_seqs += int(header.split("_")[1])
 
-    cons = msa.get_consensus(seqs.keys(), seqs)
-    if real_seqs >= 3:
+    #naive kmer correction for 2-sequence consensus
+    if real_seqs > 2:
+        cons = msa.get_consensus(seqs.keys(), seqs)
         kmer_cache.add(cons)
-
+    else:
+        aln = msa.align_muscle(seqs.keys(), seqs)
+        seq_a = aln.values()[0]
+        seq_b = aln.values()[1]
+        cons = ""
+        for i in xrange(len(seq_a)):
+            if seq_a[i] == seq_b[i]:
+                cons += seq_a[i]
+            else:
+                k = kmer_cache.k
+                tr_a = kmer_cache.count_trusted(seq_a[i - k : i + k])
+                tr_b = kmer_cache.count_trusted(seq_b[i - k : i + k])
+                cons += seq_a[i] if tr_a >= tr_b else seq_b[i]
     return "Seq_{0}_{1}".format(seq_id, real_seqs), cons
 
 
