@@ -70,7 +70,7 @@ void Clusterisator::clusterSeqs(KmerHash& kmerHash, FastaHash& fastaHash,
 			if (firstSeq == secondSeq) continue;
 
 			int matchCount = 0;
-			int j = 0, k = 0;
+			size_t j = 0, k = 0;
 			while (j < firstSeq->second.size() && k < secondSeq->second.size())
 			{
 				if (firstSeq->second[j] == secondSeq->second[k])

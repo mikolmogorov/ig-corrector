@@ -10,7 +10,7 @@ struct FastaRecord
 {
 	FastaRecord() {}
 	FastaRecord(const std::string & sequence, const std::string & description, size_t id):
-		description(description), seqId(id), sequence(sequence)
+		sequence(sequence), description(description), seqId(id)
 	{
 	}
 	

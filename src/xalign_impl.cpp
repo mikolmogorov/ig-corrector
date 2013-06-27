@@ -161,7 +161,7 @@ void Xaligner::alignOnGraph(const std::string& sequence, GraphNode* root,
 	for (size_t i = 1; i < graphNodes.size(); ++i)
 	{
 		GraphNode* node = graphNodes[i];
-		for (int n = 1; n < sequence.length() + 1; ++n)
+		for (size_t n = 1; n < sequence.length() + 1; ++n)
 		{
 			int matchScore = std::numeric_limits<int>::min();
 			GraphNode* matchNode = nullptr;
@@ -239,7 +239,7 @@ void Xaligner::alignOnGraph(const std::string& sequence, GraphNode* root,
 	if (alignments.empty()) return;
 
 	int maxPrev = 0;
-	for (int i = 1; i < alignments.size(); ++i)
+	for (size_t i = 1; i < alignments.size(); ++i)
 	{
 		if (alignments[i].start == alignments[maxPrev].start)
 		{

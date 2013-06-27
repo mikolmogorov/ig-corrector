@@ -67,7 +67,7 @@ size_t FastaReader::GetSequences(std::vector<FastaRecord> & record)
 
 void FastaReader::ValidateHeader(std::string & header)
 {
-	int delim = header.find(' ');
+	size_t delim = header.find(' ');
 	if (delim == std::string::npos)
 	{
 		delim = header.length() - 1;

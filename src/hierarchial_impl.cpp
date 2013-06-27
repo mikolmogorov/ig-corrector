@@ -80,6 +80,7 @@ bool HierarchialClust::step()
 		}
 	}
 	_clusters.erase(minKey.second);
+	return true;
 }
 
 int HierarchialClust::sequenceDistance(const std::string& seq1, const std::string& seq2)
