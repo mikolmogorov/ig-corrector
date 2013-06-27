@@ -1,27 +1,31 @@
-
+#!/usr/bin/env python
 
 import fasta_reader as fr
 import msa
 import sys
-import editdist
+#import editdist
 import logging
-from Bio import pairwise2
+import alignment as aln
 from itertools import product, combinations
 from collections import defaultdict
 
 
 logger = logging.getLogger(__name__)
 
+MATCH = 0
+MISSMATCH = -1
+GAP_OPEN = -2
+GAP_EXT = -2
+aligner = aln.Aligner(MATCH, MISSMATCH, GAP_OPEN, GAP_EXT)
 
 def global_alignment(seq1, seq2):
-    MATCH = 0
-    MISSMATCH = -1
-    GAP_OPEN = -2
-    GAP_EXT = -2
-    align = pairwise2.align.globalms(seq1, seq2, MATCH, MISSMATCH, GAP_OPEN, GAP_EXT,
-                                    one_alignment_only = True)[0]
-    return align[0:2]
+    return aligner.align(seq1, seq2, False)[0:2]
 
+def edit_dist(seq1, seq2):
+    #a = aligner.edit_dist(seq1, seq2)
+    #b = editdist.distance(seq1, seq2)
+    #sys.stderr.write(str( a) + " " + str(b) + "\n")
+    return aligner.edit_dist(seq1, seq2)
 
 def choose_true(cdr1, cdr2, weight, threshold):
     if float(weight[cdr1]) / weight[cdr2] >= threshold:
@@ -74,7 +78,7 @@ def correct_missmatches(cdr_map, weight, full_seqs, threshold):
             cons_cache[cdr1] = msa.get_consensus(cdr_map[cdr1], full_seqs)
         if cdr2 not in cons_cache:
             cons_cache[cdr2] = msa.get_consensus(cdr_map[cdr2], full_seqs)
-        dist = editdist.distance(cons_cache[cdr1], cons_cache[cdr2])
+        dist = edit_dist(cons_cache[cdr1], cons_cache[cdr2])
         if dist > 4:
             continue
 

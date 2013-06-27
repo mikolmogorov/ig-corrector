@@ -10,5 +10,5 @@ setup(name="calign",
       url='https://github.com/FredrikAppelros/align',
       install_requires=['numpy', 'cython'],
       cmdclass = {'build_ext': build_ext},
-      ext_modules = [Extension('calign', ['align.pyx', 'calign.c'])],
+      ext_modules = [Extension('align', ['src/align.pyx', 'src/calign.c'])],
 )

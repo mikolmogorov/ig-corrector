@@ -1,18 +1,25 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import sys
 import json
 import logging
 import os
 import fasta_reader as fr
+import alignment as aln
 from Bio.Seq import Seq
-from Bio import pairwise2, SeqIO
+from Bio import SeqIO
 from collections import namedtuple
 
 
 PrimerPair = namedtuple("PrimerPair", ["forward", "reverse"])
+
 logger = logging.getLogger(__name__)
 
+MATCH = 1
+MISSMATCH = -1
+GAP_OPEN = -1
+GAP_EXT = -1
+aligner = aln.Aligner(MATCH, MISSMATCH, GAP_OPEN, GAP_EXT)
 
 class AlignRes:
     ok = 0
@@ -21,13 +28,7 @@ class AlignRes:
 
 
 def local_alignment(seq1, seq2):
-    MISSMATCH = -1
-    GAP_OPEN = -1
-    GAP_EXT = -1
-    MATCH = 1
-    align = pairwise2.align.localms(seq1, seq2, MATCH, MISSMATCH, GAP_OPEN, GAP_EXT,
-                                    one_alignment_only = True)[0]
-    return align[0:3]
+    return aligner.align(seq1, seq2, True)
 
 
 def with_sequence(mid_pair, primer_pair, seq):
@@ -37,6 +38,7 @@ def with_sequence(mid_pair, primer_pair, seq):
     rev_seq = str(Seq(seq).reverse_complement())
 
     for f_dir, op_dir in [(0, 1), (1, 0)]:
+        #speeding up alignments
         start_flank = 2 * (len(mid_pair[f_dir]) + len(primer_pair[f_dir]))
         end_flank = 4 * (len(mid_pair[op_dir]) + len(primer_pair[op_dir]))
 

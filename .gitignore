@@ -2,3 +2,4 @@
 *.o
 a.out
 *.swp
+third-party/calign/src/align.c

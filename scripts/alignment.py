@@ -2,7 +2,7 @@ import sys, os
 import numpy
 
 sys.path.insert(1, os.path.join(os.path.dirname(__file__),"../third-party/calign"))
-import calign
+import align
 
 
 class Aligner:

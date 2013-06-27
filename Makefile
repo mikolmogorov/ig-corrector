@@ -10,4 +10,4 @@ calign:
 
 clean:
 	cd src; make clean
-	cd third-party/calign; rm calign.so; rm -rf build
+	cd third-party/calign; rm align.so; rm -rf build
