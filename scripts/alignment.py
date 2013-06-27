@@ -14,11 +14,11 @@ class Aligner:
         self.subs = self.subs.astype(numpy.int16)
 
     def align(self, seq1, seq2, local = False):
-        s1 = calign.string_to_alignment(seq1)
-        s2 = calign.string_to_alignment(seq2)
-        score, a1, a2 = calign.align(s1, s2, self.gap_open, self.gap_extend,
+        s1 = align.string_to_alignment(seq1)
+        s2 = align.string_to_alignment(seq2)
+        score, a1, a2 = align.align(s1, s2, self.gap_open, self.gap_extend,
                                     self.subs, local)
-        res1, res2 = calign.alignment_to_string(a1), calign.alignment_to_string(a2)
+        res1, res2 = align.alignment_to_string(a1), align.alignment_to_string(a2)
 
         if local:
             strip1, strip2 = res1.replace("-", ""), res2.replace("-", "")
