@@ -45,7 +45,7 @@ DATA REQUIREMENTS
 
 Reads should be obtained by 454 amplicon sequencing protocol with 2-side
 reading. They are expected to fully cover amplicons (immunoglobuline regions).
-Also, piplne relies on CDR3 region extracion, so some markers for this
+Also, pipelne relies on CDR3 region extracion, so some markers for this
 extracion should be provided (see below).
 
 
@@ -88,8 +88,8 @@ Parameters desctiption:
     reversePrimer: same for reverse
     cdr3Start: characteristic protein sequence for start of cdr3 region (see description of "find\_cdr3.py")
     cdr3End: same for end
-    cdr3Threshold: threshold for "graph\_clust" for cdr clustering (see pipeline description)
-    sequenceThreshold: threshold for "graph\_clust" for reads clustering
+    cdr3Threshold: threshold for "graph_clust" for cdr clustering (see pipeline description)
+    sequenceThreshold: threshold for "graph_clust" for reads clustering
 
 
 PIPELINE FLOW
@@ -187,7 +187,7 @@ FILE TYPES USED
 
 ### Cluster file format (.cl)
 
-Ordinary fasta, separated by cluster names, started with =.
+Ordinary fasta, separated by cluster names, started with "=".
 
     =Cluster_843_1
     >Seq14996_1
