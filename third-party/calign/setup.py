@@ -1,6 +1,7 @@
 from setuptools import setup
 from setuptools.extension import Extension
 from Cython.Distutils import build_ext
+import numpy as np
 
 setup(name="calign",
       version='0.1',
@@ -10,5 +11,6 @@ setup(name="calign",
       url='https://github.com/FredrikAppelros/align',
       install_requires=['numpy', 'cython'],
       cmdclass = {'build_ext': build_ext},
+      include_dirs = [np.get_include()],
       ext_modules = [Extension('align', ['src/align.pyx', 'src/calign.c'])],
 )
