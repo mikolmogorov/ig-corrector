@@ -3,7 +3,7 @@
 import sys
 import subprocess
 import fasta_reader as fr
-import msa
+import alignment
 import logging
 
 
@@ -86,10 +86,10 @@ def get_consensus(seqs, seq_id):
 
     #naive kmer correction for 2-sequence consensus
     if real_seqs > 2:
-        cons = msa.get_consensus(seqs.keys(), seqs)
+        cons = alignment.get_consensus(seqs.keys(), seqs)
         kmer_cache.add(cons)
     else:
-        aln = msa.align_muscle(seqs.keys(), seqs)
+        aln = alignment.align_muscle(seqs.keys(), seqs)
         seq_a = aln.values()[0]
         seq_b = aln.values()[1]
         cons = ""

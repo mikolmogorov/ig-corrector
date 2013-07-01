@@ -1,8 +1,13 @@
-import sys, os
+import sys
 import numpy
+import logging
+import subprocess
 
-sys.path.insert(1, os.path.join(os.path.dirname(__file__),"../third-party/calign"))
+import fasta_reader as fr
 import align
+
+MUSCLE_PATH = "muscle"
+logger = logging.getLogger(__name__)
 
 
 class Aligner:
@@ -37,11 +42,35 @@ class Aligner:
             if a != b: miss += 1
         return miss
 
+def align_muscle(headers, seqs):
+    fasta_dict = {h: seqs[h] for h in headers}
+    logger.debug("Running muscle for {0} seqs".format(len(fasta_dict)))
 
-def main():
-    a = Aligner(0, -1, -1, -1)
-    print a.align(sys.argv[1], sys.argv[2], False)
+    cmdline = [MUSCLE_PATH, "-diags", "-maxiters", "2", "-quiet"]
+    child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
+    fr.write_fasta(fasta_dict, child.stdin)
+    child.stdin.close()
+    out_dict = fr.read_fasta(child.stdout)
+    logger.debug("Muscle finished")
+    return out_dict
 
 
-if __name__ == "__main__":
-    main()
+def get_consensus(headers, seqs):
+    if len(headers) == 1:
+        return seqs[headers[0]]
+
+    align = align_muscle(headers, seqs)
+
+    seq_len = len(align[align.keys()[0]])
+    result = ""
+    for i in xrange(seq_len):
+        freq = {}
+        for h in align:
+            vals = h.split("_")
+            mult = int(vals[1]) if len(vals) > 1 else 1
+            freq[align[h][i]] = freq.get(align[h][i], 0) + mult
+
+        n = max(freq, key = freq.get)
+        if n != "-":
+            result += n
+    return result

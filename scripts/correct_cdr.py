@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
 import fasta_reader as fr
-import msa
+import alignment
 import sys
-#import editdist
 import logging
 import alignment as aln
 from itertools import product, combinations
@@ -75,9 +74,9 @@ def correct_missmatches(cdr_map, weight, full_seqs, threshold):
             continue
 
         if cdr1 not in cons_cache:
-            cons_cache[cdr1] = msa.get_consensus(cdr_map[cdr1], full_seqs)
+            cons_cache[cdr1] = alignment.get_consensus(cdr_map[cdr1], full_seqs)
         if cdr2 not in cons_cache:
-            cons_cache[cdr2] = msa.get_consensus(cdr_map[cdr2], full_seqs)
+            cons_cache[cdr2] = alignment.get_consensus(cdr_map[cdr2], full_seqs)
         dist = edit_dist(cons_cache[cdr1], cons_cache[cdr2])
         if dist > 4:
             continue

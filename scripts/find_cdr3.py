@@ -19,9 +19,9 @@ def xalign(fasta_dict, query):
     INDEL = -1
     CODON_LEN = 3
 
-    qry_len = len(re.sub(r"\[.*\]", "X", query))  * CODON_LEN
+    qry_len = len(re.sub(r"\[.*\]", "X", query)) * CODON_LEN
     trhld = qry_len * MATCH - (MATCH + INDEL)       #one indel is allowed
-    assert qry_len == 9
+    #assert qry_len == 9
 
     logger.debug("Calling xalign with querry \"{0}\"".format(query))
     cmdline = [XALIGN_EXEC, "-t", str(trhld), "-q", query, "-m", str(MATCH),
@@ -48,8 +48,7 @@ def find_cdr3(in_stream, start_seqs, end_seqs, out_stream):
     MIN_CDR_LEN = 30
     MAX_CDR_LEN = 90
 
-    logger.info("Finding cdr regions started".
-                                                        format(MIN_CDR_LEN, MAX_CDR_LEN))
+    logger.info("Finding cdr regions started".format(MIN_CDR_LEN, MAX_CDR_LEN))
     seqs = fr.read_fasta(in_stream)
     start_align = defaultdict(list)
     end_align = defaultdict(list)

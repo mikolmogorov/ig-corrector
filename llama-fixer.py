@@ -1,23 +1,29 @@
 #!/usr/bin/env python
 
-from scripts.find_cdr3 import find_cdr3
-from scripts.correct_cdr import correct_cdr
-from scripts.correct_reads import correct_reads
-from scripts.separate import split
-from scripts.remove_duplicates import remove_dups
-
-import sys, os, signal
+import sys, os
+import signal
 import subprocess
 import logging
 import threading
 import json
 import argparse
 
-
 BINARIES_PATH = "src"
 GRAPH_CLUST_EXEC = "graph_clust"
+PYTHON_LIBS = "third-party/calign"
+
+sys.path.append(os.path.abspath(PYTHON_LIBS))
+os.environ["PATH"] += os.pathsep + os.path.abspath(BINARIES_PATH)
+
+from scripts.find_cdr3 import find_cdr3
+from scripts.correct_cdr import correct_cdr
+from scripts.correct_reads import correct_reads
+from scripts.separate import split
+from scripts.remove_duplicates import remove_dups
+
+
 log_formatter = logging.Formatter("[%(asctime)s] %(name)s: %(levelname)s: %(message)s",
-                                                                "%H:%M:%S")
+                                                                            "%H:%M:%S")
 logger = logging.getLogger()
 
 class LogDistributorHandler(logging.Handler):
@@ -133,9 +139,7 @@ def run_jobs(config_name, out_dir, reads_file, log_distr, is_fastq):
 
 
 def main():
-    os.environ["PATH"] += os.pathsep + BINARIES_PATH
-
-    parser = argparse.ArgumentParser(description = "454 immunoglobulines read corrector")
+    parser = argparse.ArgumentParser(description = "A data processing utility for immunoglobulines NGS")
     parser.add_argument("reads_file", action = "store", help = "Input file with reads")
     parser.add_argument("-q", action = "store_const", metavar = "fastq", dest = "fastq",
                         default = False, const  = True, help = "Use fastq instead of fasta")
