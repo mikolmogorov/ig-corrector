@@ -1,11 +1,11 @@
 CC=g++
-CFLAGS=-c -Wall -std=c++11 -O2
-LDFLAGS=
+CFLAGS=-c -Wall -std=c++11 -stdlib=libc++ -O2
+LDFLAGS=-lc++
 
 all: graph_clust hierarchial_clust xalign
 
 graph_clust: graph_clust.o fasta.o graph_impl.o
-	$(CC) $(LDFLAGS) -o graph_clust graph_clust.o fasta.o graph_impl.o 
+	$(CC) $(LDFLAGS) -o graph_clust graph_clust.o fasta.o graph_impl.o
 
 graph_clust.o: fasta.h graph_clust.cpp graph_impl.h
 	$(CC) $(CFLAGS) graph_clust.cpp
