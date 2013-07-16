@@ -14,6 +14,8 @@ INSTALL
 -------
 
 Before building, ensure that you have all dependencies installed.
+Building requires compiler with c++0x support. If your compiler is not
+gcc, edit src/Makefile with your settings.
 
     make
 

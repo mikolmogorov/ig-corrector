@@ -7,6 +7,7 @@ import logging
 import threading
 import json
 import argparse
+import StringIO
 
 BINARIES_PATH = "src"
 GRAPH_CLUST_EXEC = "graph_clust"
@@ -74,13 +75,17 @@ class InterruptWatcher:
 def cluster_cdr(in_stream, out_stream, threshold):
     K = 11
     logger.info("graph_clust started with k = {0} and m = {1}".format(K, threshold))
+
     cmdline = [GRAPH_CLUST_EXEC, "-k", str(K), "-m", str(threshold), "-q"]
-    child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
+    child = subprocess.Popen(cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    buffer = StringIO.StringIO()
     for line in in_stream:
-        child.stdin.write(line)
-    child.stdin.close()
-    for line in child.stdout:
-        out_stream.write(line)
+        buffer.write(line)
+
+    child_stdout, _ = child.communicate(input=buffer.getvalue())
+    for line in iter(child_stdout.splitlines()):
+        out_stream.write(line + "\n")
     logger.info("graph_clust finished")
 
 

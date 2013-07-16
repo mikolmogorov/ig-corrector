@@ -5,6 +5,7 @@ import subprocess
 import fasta_reader as fr
 import alignment
 import logging
+from StringIO import StringIO
 
 
 GRAPH_EXEC = "graph_clust"
@@ -43,9 +44,12 @@ def run_graph(cluster_seqs, threshlod):
     logger.debug("graph_clust started with k = {0} and m = {1}".format(K, threshlod))
     cmdline = [GRAPH_EXEC, "-k", str(K), "-m", str(threshlod), "-q"]
     child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
-    fr.write_fasta(cluster_seqs, child.stdin)
-    child.stdin.close()
-    preclusters = fr.read_cluster(child.stdout)
+
+    buffer = StringIO()
+    fr.write_fasta(cluster_seqs, buffer)
+    child_stdout, _ = child.communicate(input=buffer.getvalue())
+
+    preclusters = fr.read_cluster(StringIO(child_stdout))
     logger.debug("graph_clust finished")
     return preclusters
 
@@ -54,9 +58,12 @@ def run_hierarchial(cluster_seqs, threshlod):
     logger.debug("hierarchial_clust started with cutoff {0}".format(threshlod))
     cmdline = [HIERARCH_EXEC, "-c", str(threshlod), "-q"]
     child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
-    fr.write_fasta(cluster_seqs, child.stdin)
-    child.stdin.close()
-    clusters = fr.read_cluster(child.stdout)
+
+    buffer = StringIO()
+    fr.write_fasta(cluster_seqs, buffer)
+    child_stdout, _ = child.communicate(input=buffer.getvalue())
+
+    clusters = fr.read_cluster(StringIO(child_stdout))
     logger.debug("hierarchial_clust finished")
     return clusters
 

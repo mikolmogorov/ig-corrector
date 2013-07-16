@@ -2,6 +2,7 @@ import sys
 import numpy
 import logging
 import subprocess
+from StringIO import StringIO
 
 import fasta_reader as fr
 import align
@@ -48,9 +49,12 @@ def align_muscle(headers, seqs):
 
     cmdline = [MUSCLE_PATH, "-diags", "-maxiters", "2", "-quiet"]
     child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
-    fr.write_fasta(fasta_dict, child.stdin)
-    child.stdin.close()
-    out_dict = fr.read_fasta(child.stdout)
+
+    buffer = StringIO()
+    fr.write_fasta(fasta_dict, buffer)
+    child_stdout, _ = child.communicate(input=buffer.getvalue())
+
+    out_dict = fr.read_fasta(StringIO(child_stdout))
     logger.debug("Muscle finished")
     return out_dict
 

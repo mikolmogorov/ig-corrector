@@ -1,6 +1,10 @@
-CC=g++
-CFLAGS=-c -Wall -std=c++11 -stdlib=libc++ -O2
-LDFLAGS=-lc++
+CC=g++		#change with your compiler name
+CFLAGS=-c -Wall -std=c++0x -O2
+LDFLAGS=
+
+#change on this, if you are running troubles with clang
+#CFLAGS=-c -Wall -std=c++0x -stdlib=libc++ -O2 	
+#LDFLAGS=-lc++
 
 all: graph_clust hierarchial_clust xalign
 

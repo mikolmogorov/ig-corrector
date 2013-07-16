@@ -2,6 +2,7 @@ def _fasta_source(stream):
     seq = ""
     header = ""
     for line in stream:
+        #print line
         l = line.strip("\n")
         if l.startswith(">"):
             if len(header) > 0:

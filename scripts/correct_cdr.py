@@ -21,9 +21,6 @@ def global_alignment(seq1, seq2):
     return aligner.align(seq1, seq2, False)[0:2]
 
 def edit_dist(seq1, seq2):
-    #a = aligner.edit_dist(seq1, seq2)
-    #b = editdist.distance(seq1, seq2)
-    #sys.stderr.write(str( a) + " " + str(b) + "\n")
     return aligner.edit_dist(seq1, seq2)
 
 def choose_true(cdr1, cdr2, weight, threshold):

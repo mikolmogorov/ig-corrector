@@ -5,6 +5,7 @@ import sys
 import subprocess
 import logging
 import re
+import StringIO
 from collections import namedtuple, defaultdict
 
 XALIGN_EXEC = "xalign"
@@ -20,18 +21,20 @@ def xalign(fasta_dict, query):
     CODON_LEN = 3
 
     qry_len = len(re.sub(r"\[.*\]", "X", query)) * CODON_LEN
-    trhld = qry_len * MATCH - (MATCH + INDEL)       #one indel is allowed
+    trhld = qry_len * MATCH - (MATCH + INDEL)                   #one indel is allowed
     #assert qry_len == 9
+
+    buffer = StringIO.StringIO()
+    fr.write_fasta(fasta_dict, buffer)
 
     logger.debug("Calling xalign with querry \"{0}\"".format(query))
     cmdline = [XALIGN_EXEC, "-t", str(trhld), "-q", query, "-m", str(MATCH),
                     "-x", str(MISSMATCH), "-i", str(INDEL), "-d", str(INDEL)]
     child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
-    fr.write_fasta(fasta_dict, child.stdin)
-    child.stdin.close()
+    child_stdout, _ = child.communicate(input=buffer.getvalue())
 
     out_dict = {}
-    for line in child.stdout:
+    for line in iter(child_stdout.splitlines()):
         values = line.strip().split(" ")
         header = values[0][1:]
         aligns = values[1:]
