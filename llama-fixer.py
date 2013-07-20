@@ -7,10 +7,8 @@ import logging
 import threading
 import json
 import argparse
-import StringIO
 
 BINARIES_PATH = "src"
-GRAPH_CLUST_EXEC = "graph_clust"
 PYTHON_LIBS = "third-party/calign"
 
 sys.path.append(os.path.abspath(PYTHON_LIBS))
@@ -21,11 +19,13 @@ from scripts.correct_cdr import correct_cdr
 from scripts.correct_reads import correct_reads
 from scripts.separate import split
 from scripts.remove_duplicates import remove_dups
+from scripts.ext_tools import graph_clust
+import scripts.fasta_reader as fr
 
 
-log_formatter = logging.Formatter("[%(asctime)s] %(name)s: %(levelname)s: %(message)s",
-                                                                            "%H:%M:%S")
+log_formatter = logging.Formatter("[%(asctime)s] %(name)s: %(levelname)s: %(message)s", "%H:%M:%S")
 logger = logging.getLogger()
+
 
 class LogDistributorHandler(logging.Handler):
     def __init__(self):
@@ -71,22 +71,11 @@ class InterruptWatcher:
             os.kill(self.child, signal.SIGKILL)
         except OSError: pass
 
-
 def cluster_cdr(in_stream, out_stream, threshold):
     K = 11
-    logger.info("graph_clust started with k = {0} and m = {1}".format(K, threshold))
-
-    cmdline = [GRAPH_CLUST_EXEC, "-k", str(K), "-m", str(threshold), "-q"]
-    child = subprocess.Popen(cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-
-    buffer = StringIO.StringIO()
-    for line in in_stream:
-        buffer.write(line)
-
-    child_stdout, _ = child.communicate(input=buffer.getvalue())
-    for line in iter(child_stdout.splitlines()):
-        out_stream.write(line + "\n")
-    logger.info("graph_clust finished")
+    fasta_dict = fr.read_fasta(in_stream)
+    clusters = graph_clust(fasta_dict, K, threshold)
+    fr.write_cluster(clusters, out_stream)
 
 
 def process_sample(samplepref, filename, outdir, cdr_start,

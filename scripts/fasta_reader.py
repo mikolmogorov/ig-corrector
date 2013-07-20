@@ -2,7 +2,6 @@ def _fasta_source(stream):
     seq = ""
     header = ""
     for line in stream:
-        #print line
         l = line.strip("\n")
         if l.startswith(">"):
             if len(header) > 0:
@@ -65,3 +64,9 @@ def read_cluster(stream):
     if clust_header:
         clusters[clust_header] = read_fasta(iter(fasta_buffer.splitlines()))
     return clusters
+
+
+def write_cluster(clusters, stream):
+    for cl in clusters:
+        stream.write("=" + cl + "\n")
+        write_fasta(clusters[cl], stream)

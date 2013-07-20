@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 
 import sys
-import subprocess
 import fasta_reader as fr
 import alignment
 import logging
-from StringIO import StringIO
-
-
-GRAPH_EXEC = "graph_clust"
-HIERARCH_EXEC = "hierarchial_clust"
+import ext_tools
+from cStringIO import StringIO
 
 
 logger = logging.getLogger(__name__)
@@ -36,36 +32,31 @@ class KmerCache:
         return counter
 
 
-kmer_cache = KmerCache(11)
+KMER = 11
+kmer_cache = KmerCache(KMER)
 
 
-def run_graph(cluster_seqs, threshlod):
-    K = 21
-    logger.debug("graph_clust started with k = {0} and m = {1}".format(K, threshlod))
-    cmdline = [GRAPH_EXEC, "-k", str(K), "-m", str(threshlod), "-q"]
-    child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
+def run_graph(cluster_seqs, threshold):
+    GRAPH_KMER = 21
+    #in_buffer, out_buffer = StringIO(), StringIO()
+    #fr.write_fasta(cluster_seqs, in_buffer)
+    #in_buffer.seek(0)
 
-    buffer = StringIO()
-    fr.write_fasta(cluster_seqs, buffer)
-    child_stdout, _ = child.communicate(input=buffer.getvalue())
-
-    preclusters = fr.read_cluster(StringIO(child_stdout))
-    logger.debug("graph_clust finished")
-    return preclusters
+    #ext_tools.graph_clust(in_buffer, out_buffer, GRAPH_KMER, threshold)
+    #out_buffer.seek(0)
+    #return fr.read_cluster(out_buffer)
+    return ext_tools.graph_clust(cluster_seqs, GRAPH_KMER, threshold)
 
 
-def run_hierarchial(cluster_seqs, threshlod):
-    logger.debug("hierarchial_clust started with cutoff {0}".format(threshlod))
-    cmdline = [HIERARCH_EXEC, "-c", str(threshlod), "-q"]
-    child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
+def run_hierarchial(cluster_seqs, threshold):
+    #in_buffer, out_buffer = StringIO(), StringIO()
+    #fr.write_fasta(cluster_seqs, in_buffer)
+    #in_buffer.seek(0)
 
-    buffer = StringIO()
-    fr.write_fasta(cluster_seqs, buffer)
-    child_stdout, _ = child.communicate(input=buffer.getvalue())
-
-    clusters = fr.read_cluster(StringIO(child_stdout))
-    logger.debug("hierarchial_clust finished")
-    return clusters
+    #ext_tools.hierarchial_clust(in_buffer, out_buffer, threshold)
+    #out_buffer.seek(0)
+    #return fr.read_cluster(out_buffer)
+    return ext_tools.hierarchial_clust(cluster_seqs, threshold)
 
 
 def split_cluster(cluster_seqs, threshlod):

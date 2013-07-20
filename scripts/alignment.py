@@ -2,12 +2,13 @@ import sys
 import numpy
 import logging
 import subprocess
-from StringIO import StringIO
+from cStringIO import StringIO
 
 import fasta_reader as fr
 import align
+import ext_tools
 
-MUSCLE_PATH = "muscle"
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,18 +46,7 @@ class Aligner:
 
 def align_muscle(headers, seqs):
     fasta_dict = {h: seqs[h] for h in headers}
-    logger.debug("Running muscle for {0} seqs".format(len(fasta_dict)))
-
-    cmdline = [MUSCLE_PATH, "-diags", "-maxiters", "2", "-quiet"]
-    child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
-
-    buffer = StringIO()
-    fr.write_fasta(fasta_dict, buffer)
-    child_stdout, _ = child.communicate(input=buffer.getvalue())
-
-    out_dict = fr.read_fasta(StringIO(child_stdout))
-    logger.debug("Muscle finished")
-    return out_dict
+    return ext_tools.muscle(fasta_dict)
 
 
 def get_consensus(headers, seqs):
