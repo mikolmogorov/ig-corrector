@@ -1,6 +1,7 @@
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from cStringIO import StringIO
 
 
 def read_fasta(stream):
@@ -27,18 +28,20 @@ def write_fasta(fasta_dict, stream):
 def read_cluster(stream):
     clusters = {}
 
-    fasta_buffer = ""
+    fasta_buffer = StringIO()
     clust_header = None
     for line in stream:
         if line.startswith("="):
             if clust_header:
-                clusters[clust_header] = read_fasta(iter(fasta_buffer.splitlines()))
+                fasta_buffer.seek(0)
+                clusters[clust_header] = read_fasta(fasta_buffer)
             clust_header = line.strip()[1:]
-            fasta_buffer = ""
+            fasta_buffer = StringIO()
         else:
-            fasta_buffer += line
+            fasta_buffer.write(line)
     if clust_header:
-        clusters[clust_header] = read_fasta(iter(fasta_buffer.splitlines()))
+        fasta_buffer.seek(0)
+        clusters[clust_header] = read_fasta(fasta_buffer)
     return clusters
 
 
