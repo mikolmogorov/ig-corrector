@@ -1,65 +1,33 @@
 #!/usr/bin/env python
 
 import fasta_reader as fr
+import ext_tools
 import sys
 import subprocess
 import logging
-import re
 import StringIO
-from collections import namedtuple, defaultdict
-
-XALIGN_EXEC = "xalign"
+from collections import defaultdict, namedtuple
 
 AlignInfo = namedtuple("AlignInfo", ["begin", "end", "score"])
 logger = logging.getLogger(__name__)
 
 
-def xalign(fasta_dict, query):
-    MATCH = 2
-    MISSMATCH = -2
-    INDEL = -1
-    CODON_LEN = 3
-
-    qry_len = len(re.sub(r"\[.*\]", "X", query)) * CODON_LEN
-    trhld = qry_len * MATCH - (MATCH + INDEL)                   #one indel is allowed
-    #assert qry_len == 9
-
-    buffer = StringIO.StringIO()
-    fr.write_fasta(fasta_dict, buffer)
-
-    logger.debug("Calling xalign with querry \"{0}\"".format(query))
-    cmdline = [XALIGN_EXEC, "-t", str(trhld), "-q", query, "-m", str(MATCH),
-                    "-x", str(MISSMATCH), "-i", str(INDEL), "-d", str(INDEL)]
-    child = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
-    child_stdout, _ = child.communicate(input=buffer.getvalue())
-
-    out_dict = {}
-    for line in iter(child_stdout.splitlines()):
-        values = line.strip().split(" ")
-        header = values[0][1:]
-        aligns = values[1:]
-        #assert header.startswith(">")
-        out_dict[header] = []
-        for align in aligns:
-            start, end, score = align[1:-1].split(",")
-            out_dict[header].append(AlignInfo(int(start), int(end), int(score)))
-    logger.debug("xalign finished")
-    return out_dict
-
-
 def find_cdr3(in_stream, start_seqs, end_seqs, out_stream):
     MIN_CDR_LEN = 30
     MAX_CDR_LEN = 90
+    MATCH = 2
+    MISSMATCH = -2
+    INDEL = -1
 
     logger.info("Finding cdr regions started".format(MIN_CDR_LEN, MAX_CDR_LEN))
     seqs = fr.read_fasta(in_stream)
     start_align = defaultdict(list)
     end_align = defaultdict(list)
     for qry in start_seqs:
-        for h, alns in xalign(seqs, qry).iteritems():
+        for h, alns in ext_tools.xalign(seqs, qry, MATCH, MISSMATCH, INDEL).iteritems():
             start_align[h].extend(alns)
     for qry in end_seqs:
-        for h, alns in xalign(seqs, qry).iteritems():
+        for h, alns in ext_tools.xalign(seqs, qry, MATCH, MISSMATCH, INDEL).iteritems():
             end_align[h].extend(alns)
 
     for h, seq in seqs.iteritems():
