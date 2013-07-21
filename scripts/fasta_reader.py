@@ -1,51 +1,27 @@
-def _fasta_source(stream):
-    seq = ""
-    header = ""
-    for line in stream:
-        l = line.strip("\n")
-        if l.startswith(">"):
-            if len(header) > 0:
-                yield header, seq
-                seq = ""
-            header = l[1:]
-        else:
-            seq += l
-    if seq != "":
-        yield header, seq
-
-
-def _fastq_source(stream):
-    seq = ""
-    header = ""
-    state = 0
-    for line in stream:
-        l = line.strip("\n")
-        if state == 0:
-            header = l[1:]
-        elif state == 1:
-            seq = l
-        elif state == 3:
-            yield header, seq, line
-        state = (state + 1) % 4
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 
 def read_fasta(stream):
+    records = SeqIO.parse(stream, "fasta")
     seqs = {}
-    for h, seq in _fasta_source(stream):
-        seqs[h] = seq
+    for rec in records:
+        seqs[rec.id] = str(rec.seq)
     return seqs
 
 
 def read_fastq(stream):
+    records = SeqIO.parse(stream, "fastq")
     seqs = {}
-    for h, seq, _ in _fastq_source(stream):
-        seqs[h] = seq
+    for rec in records:
+        seqs[rec.id] = str(rec.seq)
     return seqs
 
 
 def write_fasta(fasta_dict, stream):
-    for h in fasta_dict:
-        stream.write(">{0}\n{1}\n".format(h, fasta_dict[h]))
+    for h, seq in fasta_dict.iteritems():
+        SeqIO.write(SeqRecord(Seq(seq), id=h, description=""), stream, "fasta")
 
 
 def read_cluster(stream):

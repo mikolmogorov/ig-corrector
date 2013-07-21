@@ -7,7 +7,6 @@ import os
 import fasta_reader as fr
 import alignment as aln
 from Bio.Seq import Seq
-from Bio import SeqIO
 from collections import namedtuple
 
 
@@ -68,10 +67,9 @@ def with_sequence(mid_pair, primer_pair, seq):
 def get_seqs(filename, is_fastq):
     file = open(filename, "r")
     if is_fastq:
-        records = SeqIO.parse(file, "fastq")
+        return fr.read_fastq(file)
     else:
-        records = SeqIO.parse(file, "fasta")
-    return {rec.id : str(rec.seq) for rec in records}
+        return fr.read_fasta(file)
 
 
 def split(config_name, reads_file, out_dir, is_fastq):
