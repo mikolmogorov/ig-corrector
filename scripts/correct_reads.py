@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-import sys
+import sys, os
 import fasta_reader as fr
 import alignment
 import logging
 import ext_tools
-from cStringIO import StringIO
 
 
 logger = logging.getLogger(__name__)
@@ -38,24 +37,10 @@ kmer_cache = KmerCache(KMER)
 
 def run_graph(cluster_seqs, threshold):
     GRAPH_KMER = 21
-    #in_buffer, out_buffer = StringIO(), StringIO()
-    #fr.write_fasta(cluster_seqs, in_buffer)
-    #in_buffer.seek(0)
-
-    #ext_tools.graph_clust(in_buffer, out_buffer, GRAPH_KMER, threshold)
-    #out_buffer.seek(0)
-    #return fr.read_cluster(out_buffer)
     return ext_tools.graph_clust(cluster_seqs, GRAPH_KMER, threshold)
 
 
 def run_hierarchial(cluster_seqs, threshold):
-    #in_buffer, out_buffer = StringIO(), StringIO()
-    #fr.write_fasta(cluster_seqs, in_buffer)
-    #in_buffer.seek(0)
-
-    #ext_tools.hierarchial_clust(in_buffer, out_buffer, threshold)
-    #out_buffer.seek(0)
-    #return fr.read_cluster(out_buffer)
     return ext_tools.hierarchial_clust(cluster_seqs, threshold)
 
 
@@ -102,7 +87,7 @@ def get_consensus(seqs, seq_id):
     return "Seq_{0}_{1}".format(seq_id, real_seqs), cons
 
 
-def correct_reads(cluster_stream, threshlod, out_stream):
+def correct_reads(cluster_stream, threshlod, out_corr_stream, out_cluster_stream):
     out_seqs = {}
     count = 0
     init_clusters = fr.read_cluster(cluster_stream)
@@ -110,11 +95,12 @@ def correct_reads(cluster_stream, threshlod, out_stream):
                                         .format(len(init_clusters), threshlod))
     for cl_name, cl_seqs in init_clusters.iteritems():
         clusters = split_cluster(cl_seqs, threshlod)
+        fr.write_cluster(clusters, out_cluster_stream)
         for newc_name, newc_seqs in clusters.iteritems():
             cons_hdr, cons_seq = get_consensus(newc_seqs, count)
             out_seqs[cons_hdr] = cons_seq
             count += 1
-    fr.write_fasta(out_seqs, out_stream)
+    fr.write_fasta(out_seqs, out_corr_stream)
     logger.info("Correcting finished, {0} unique seqs found".format(len(out_seqs)))
 
 
@@ -125,7 +111,7 @@ def main():
         print "USAGE: correct_reads.py reads_clusters"
         return
 
-    correct_reads(open(sys.argv[1], "r"), THRESHOLD, sys.stdout)
+    correct_reads(open(sys.argv[1], "r"), THRESHOLD, sys.stdout, open(os.devnull, "w"))
 
 if __name__ == "__main__":
     main()

@@ -98,6 +98,7 @@ def split(config_name, reads_file, out_dir, is_fastq):
     reads = get_seqs(reads_file, is_fastq)
     old_percent = -1
     counter = 0
+    is_empty = {sample : True for sample in mids.keys()}
 
     for header, seq in reads.iteritems():
         counter += 1
@@ -112,25 +113,33 @@ def split(config_name, reads_file, out_dir, is_fastq):
             fr.write_fasta({header : seq}, filtered)
             continue
 
-        match_count = 0
+        assigned = False
         for sample in mids.keys():
             res_seq, res = with_sequence(mids[sample], primers[sample], stripped)
             if res == AlignRes.ok:
                 logger.debug("{0}: is {1}".format(header, sample))
                 fr.write_fasta({header : res_seq}, files[sample])
-                match_count += 1
+                assigned = True
+                is_empty[sample] = False
                 break
             elif res == AlignRes.incomplete:
                 logger.debug("{0}: is incomplete {1}".format(header, sample))
                 fr.write_fasta({header : stripped}, incomplete[sample])
-                match_count += 1
+                assigned = True
+                is_empty[sample] = False
                 break
 
-        if match_count == 0:
+        if not assigned:
             logger.debug("{0}: no mid found".format(header))
             fr.write_fasta({header : seq}, filtered)
 
     sys.stderr.write("\n")
+
+    for sample in is_empty:
+        if is_empty[sample]:
+            print >>sys.stderr, "Warning: sample " + sample + " contains no sequences"
+            fr.write_fasta({"Seq" : "EMPTYSAMPLE"}, files[sample])
+
     logger.info("Splitting finished")
 
 

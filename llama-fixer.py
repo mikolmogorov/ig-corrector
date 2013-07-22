@@ -84,6 +84,7 @@ def process_sample(samplepref, filename, outdir, cdr_start,
     CDR_FILE = os.path.join(outdir, samplepref + "_cdr.fasta")
     CDR_CLUST_FILE = os.path.join(outdir, samplepref + "_cdr.cl")
     CDR_CORR_FILE = os.path.join(outdir, samplepref + "_cdr_corrected.cl")
+    READ_CLUSTER_FILE = os.path.join(outdir, samplepref + ".cl")
     READ_CORR_FILE = os.path.join(outdir, samplepref + "_corrected.fasta")
 
     logger.info("Removing duplicate sequqnces...")
@@ -100,8 +101,15 @@ def process_sample(samplepref, filename, outdir, cdr_start,
                 cdr_threshold, open(CDR_CORR_FILE, "w"))
 
     logger.info("Correcting reads...")
-    correct_reads(open(CDR_CORR_FILE, "r"),
-                    seq_threshold, open(READ_CORR_FILE, "w"))
+    correct_reads(open(CDR_CORR_FILE, "r"), seq_threshold,
+                 open(READ_CORR_FILE, "w"), open(READ_CLUSTER_FILE, "w"))
+
+    logger.info("Removing intermediate files...")
+    os.remove(UNIQUE_FILE)
+    os.remove(CDR_FILE)
+    os.remove(CDR_CLUST_FILE)
+    os.remove(CDR_CORR_FILE)
+
     logger.info("Finished!")
 
 
@@ -147,6 +155,10 @@ def main():
     reads_file = args.reads_file
     out_dir = args.out_dir
     is_fastq = args.fastq
+
+    if not os.path.isdir(out_dir):
+        print >>sys.stderr, "Output directory doesn`t exists"
+        return
 
     logging.getLogger().setLevel(logging.DEBUG)
     console_formatter = logging.Formatter("[%(asctime)s] %(threadName)s: %(message)s",
